@@ -3,6 +3,7 @@
 // in Node tests (fs).
 
 import { SHARED_FILES, TEMPLATES, FONT_FILES, FONT_LICENSES } from '../templates.js';
+import { LIBRARY_IDS, libraryPath } from '../music-library.js';
 
 export function sourceManifest() {
   const text = [...Object.values(SHARED_FILES), ...TEMPLATES.flatMap((t) => [t.runtime, t.css])];
@@ -11,17 +12,21 @@ export function sourceManifest() {
   return { text, fonts, licenses };
 }
 
-export async function loadSources({ readText, readBytes }) {
+// Built-in tones are only preloaded when asked (Node tests); the browser
+// editor fetches the one track a user picks.
+export async function loadSources({ readText, readBytes }, { includeLibrary = false } = {}) {
   const m = sourceManifest();
   const files = {};
   const fonts = {};
   const licenses = {};
+  const library = {};
   await Promise.all([
+    ...(includeLibrary ? LIBRARY_IDS.map(async (id) => { library[id] = await readBytes(libraryPath(id)); }) : []),
     ...m.text.map(async (p) => { files[p] = await readText(p); }),
     ...m.fonts.map(async (f) => { fonts[f] = await readBytes(`vendor/fonts/${f}`); }),
     ...m.licenses.map(async (f) => { licenses[f] = await readText(`vendor/fonts/${f}`); })
   ]);
-  return { files, fonts, licenses };
+  return { files, fonts, licenses, library };
 }
 
 export function browserLoader(base = new URL('../../', import.meta.url)) {
@@ -43,4 +48,15 @@ export function loadBrowserSources() {
     throw err;
   });
   return cached;
+}
+
+const trackCache = new Map();
+export function loadLibraryTrack(id) {
+  if (!trackCache.has(id)) {
+    trackCache.set(id, browserLoader().readBytes(libraryPath(id)).catch((err) => {
+      trackCache.delete(id);
+      throw err;
+    }));
+  }
+  return trackCache.get(id);
 }

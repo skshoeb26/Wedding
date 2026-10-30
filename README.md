@@ -47,6 +47,11 @@ account and no build step, and the exported site never contacts the generator.
   venues, addresses and Google Maps links, countdown with time zone, photos,
   background artwork, colours (with presets), fonts, text size, music, optional
   sections, RSVP contacts, WhatsApp and form links, labels and language.
+- **Built-in music**: six original, royalty-free Arabic-style tones of about
+  40 seconds each (Hijaz Dawn, Bayati Serenity, Kurd Blessing, Nahawand
+  Evening, Rast Celebration, and Daf Zaffa, which is daf and claps only), with a
+  ▶ preview in the editor. Families can also upload their own nasheed or
+  recitation. Only the chosen tone is included in the export.
 - **Exports**
   - **ZIP website (recommended)**: `index.html`, `assets/css/style.css`,
     `assets/js/app.js`, `assets/images/`, `assets/audio/`, `assets/fonts/` and
@@ -131,8 +136,8 @@ The `README.md` inside every export repeats these steps.
 
 ```bash
 npm run check      # syntax check of every JS file and JSON validation
-npm test           # 30 unit tests: core runtime, schema, store, uploads, export engine
-npm run test:e2e   # 142 browser checks with Playwright + Chromium
+npm test           # 35 unit tests: core runtime, schema, store, uploads, export engine
+npm run test:e2e   # 151 browser checks with Playwright + Chromium
 npm run test:dist  # the same browser checks against the deployable dist/ build
 ```
 
@@ -174,6 +179,7 @@ templates/                 everything that ships inside an exported site
   sealed-envelope/         runtime.js + template.css
   royal-doors/, story-cards/, moonlit-night/
   garden-scroll/           runtime.js + template.css
+audio/library/             built-in tones (original, CC0) — tools/generate-tones.mjs
 vendor/                    JSZip (MIT) and OFL fonts with their licences
 tools/                     static server, syntax checker, build-site (dist/)
 vercel.json, netlify.toml  hosting configuration

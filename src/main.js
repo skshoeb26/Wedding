@@ -2,7 +2,7 @@
 
 import { createProjectFile, parseProjectFile, readUpload } from './assets.js';
 import { buildSite, verifyZipFiles, SINGLE_FILE_LIMIT_BYTES } from './export/build.js';
-import { loadBrowserSources } from './export/sources.js';
+import { loadBrowserSources, loadLibraryTrack } from './export/sources.js';
 import { EditorForm } from './form.js';
 import { Preview } from './preview.js';
 import { ASSET_SLOTS, THEME_PRESETS, createDefaultConfig, normalizeConfig } from './schema.js';
@@ -216,6 +216,20 @@ async function onUpload(slot, file) {
   }
 }
 
+// Built-in tones are fetched on demand and kept in memory like uploads.
+async function ensureLibraryAssets() {
+  const ref = store.config.assets.music;
+  if (!ref || !ref.library || store.assets.has(ref.id)) return;
+  try {
+    const bytes = await loadLibraryTrack(ref.library);
+    store.addAsset({ id: ref.id, name: ref.name, mime: 'audio/mpeg', size: bytes.length, bytes });
+    preview.update();
+    form.sync();
+  } catch {
+    toast('The selected tone could not be loaded. Check your connection and try again.');
+  }
+}
+
 function onRemoveAsset(slot) {
   store.update((c) => { c.assets[slot] = null; }, 'asset');
   toast(`${ASSET_SLOTS[slot].label} removed. Use Undo to restore it.`);
@@ -364,12 +378,14 @@ async function init() {
   store.subscribe((config, reason) => {
     form.sync();
     preview.update();
+    ensureLibraryAssets();
     if (reason.type !== 'saved') autosave();
     if (reason.type === 'asset' || reason.type === 'import' || reason.type === 'undo' || reason.type === 'redo' || reason.type === 'replace') renderNotices();
     if (reason.type === 'template' || reason.type === 'preset') renderGallery();
     renderStatus();
   });
 
+  ensureLibraryAssets();
   renderGallery();
   renderNotices();
   renderStatus();

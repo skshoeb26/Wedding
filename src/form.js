@@ -2,7 +2,8 @@
 // the store. All values are written with DOM properties, never as HTML.
 
 import { FORM } from './form-spec.js';
-import { ASSET_SLOTS, THEME_PRESETS, newEvent } from './schema.js';
+import { ASSET_SLOTS, THEME_PRESETS, libraryMusicRef, newEvent } from './schema.js';
+import { MUSIC_LIBRARY, libraryPath } from './music-library.js';
 import { TEMPLATES, switchTemplate } from './templates.js';
 import { formatBytes, getPath } from './util.js';
 
@@ -79,6 +80,8 @@ export class EditorForm {
         return this.presetPicker(f);
       case 'asset':
         return this.conditional(this.assetField(f), f, prefix);
+      case 'music-library':
+        return this.musicLibrary(f);
       case 'action':
         return this.conditional(
           h('button', { type: 'button', className: 'btn btn-ghost btn-small', text: f.label, onclick: () => this.action(f.action) }),
@@ -292,6 +295,10 @@ export class EditorForm {
         this.syncAsset(b);
         continue;
       }
+      if (b.toneRadio) {
+        this.syncTone(b);
+        continue;
+      }
       const value = getPath(c, b.path);
       const ctl = b.control;
       if (b.f.type === 'radio') ctl.checked = ctl.value === value;
@@ -338,8 +345,85 @@ export class EditorForm {
     }
   }
 
+  // Built-in tone picker: "No music", each library tone with a preview
+  // button, and the user's own upload when there is one.
+  musicLibrary(f) {
+    const name = nextId('music');
+    const list = h('div', { className: 'tone-list', role: 'radiogroup', 'aria-label': f.label });
+    const player = this.tonePlayer || (this.tonePlayer = new Audio());
+    const option = (value, title, detail, previewId) => {
+      const id = nextId(`tone-${value}`);
+      const radio = h('input', { type: 'radio', name, id, value });
+      radio.addEventListener('change', () => radio.checked && this.chooseTone(value));
+      const play = previewId ? h('button', {
+        type: 'button', className: 'tone-play', 'aria-label': `Listen to ${title}`, 'data-track': previewId,
+        onclick: () => this.togglePreview(previewId, play)
+      }, h('span', { 'aria-hidden': 'true', text: '▶' })) : null;
+      const row = h('div', { className: 'tone-option' },
+        radio,
+        h('label', { for: id }, h('span', { className: 'tone-title', text: title }), detail ? h('span', { className: 'hint', text: detail }) : null),
+        play);
+      this.bindings.push({ toneRadio: radio, value });
+      return row;
+    };
+    list.append(option('none', 'No music', 'Silent invitation'));
+    for (const t of MUSIC_LIBRARY) list.append(option(t.id, t.title, `${t.instruments} · ${t.description}`, t.id));
+    list.append(option('upload', 'My own upload', 'Use the file uploaded below'));
+    player.addEventListener('ended', () => this.stopPreview());
+    return h('div', { className: 'field' }, h('p', { className: 'label', text: f.label }), f.hint ? h('p', { className: 'hint', text: f.hint }) : null, list);
+  }
+
+  chooseTone(value) {
+    if (value === 'upload') {
+      if (!this.lastUpload) {
+        this.ctx.toast('Upload a music file below first.');
+        this.sync();
+        return;
+      }
+      this.store.update((c) => { c.assets.music = this.lastUpload; }, 'asset');
+      return;
+    }
+    this.store.update((c) => { c.assets.music = value === 'none' ? null : libraryMusicRef(value); }, 'asset');
+  }
+
+  togglePreview(trackId, button) {
+    const player = this.tonePlayer;
+    if (this.previewing === trackId && !player.paused) {
+      this.stopPreview();
+      return;
+    }
+    this.stopPreview();
+    player.src = libraryPath(trackId);
+    player.currentTime = 0;
+    player.play().then(() => {
+      this.previewing = trackId;
+      button.classList.add('is-playing');
+      button.firstChild.textContent = '■';
+      button.setAttribute('aria-label', button.getAttribute('aria-label').replace('Listen to', 'Stop'));
+    }, () => this.ctx.toast('This browser could not play the preview.'));
+  }
+
+  stopPreview() {
+    if (this.tonePlayer) this.tonePlayer.pause();
+    this.previewing = null;
+    for (const b of this.root.querySelectorAll('.tone-play.is-playing')) {
+      b.classList.remove('is-playing');
+      b.firstChild.textContent = '▶';
+      b.setAttribute('aria-label', b.getAttribute('aria-label').replace('Stop', 'Listen to'));
+    }
+  }
+
+  syncTone(b) {
+    const ref = this.store.config.assets.music;
+    if (ref && !ref.library) this.lastUpload = ref;
+    const current = !ref ? 'none' : ref.library || 'upload';
+    b.toneRadio.checked = b.value === current;
+    b.toneRadio.closest('.tone-option').classList.toggle('is-selected', b.value === current);
+  }
+
   syncAsset(b) {
-    const ref = this.store.config.assets[b.asset];
+    let ref = this.store.config.assets[b.asset];
+    if (ref && ref.library) ref = null; // built-in tones are shown in the tone list
     const loaded = ref && this.store.assets.get(ref.id);
     b.info.replaceChildren();
     if (!ref) {

@@ -4,6 +4,7 @@
 // optional sections, theme, animation, asset references and site metadata.
 
 import { clone, isPlainObject } from './util.js';
+import { LIBRARY_IDS, libraryAssetId, libraryTrack } from './music-library.js';
 
 export const SCHEMA_VERSION = 1;
 
@@ -173,7 +174,7 @@ export function createDefaultConfig(templateId = 'floral-book') {
     assets: {
       background: null,
       couplePhoto: null,
-      music: null
+      music: libraryMusicRef('hijaz-dawn')
     },
     meta: {
       title: '',
@@ -222,8 +223,15 @@ function mergeShape(defaults, input) {
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
+// A built-in tone from the music library, referenced by id.
+export function libraryMusicRef(trackId) {
+  const t = libraryTrack(trackId);
+  return t ? { id: libraryAssetId(t.id), name: `${t.title}.mp3`, mime: 'audio/mpeg', size: 0, library: t.id } : null;
+}
+
 function normalizeAssetRef(ref) {
   if (!isPlainObject(ref) || typeof ref.id !== 'string') return null;
+  if (ref.library !== undefined) return LIBRARY_IDS.includes(ref.library) ? libraryMusicRef(ref.library) : null;
   return {
     id: ref.id.slice(0, 64),
     name: typeof ref.name === 'string' ? ref.name.slice(0, 200) : 'file',
@@ -272,7 +280,10 @@ export function normalizeConfig(input, templateIds = ['floral-book', 'garden-scr
   if (!['ltr', 'rtl'].includes(out.meta.dir)) out.meta.dir = 'ltr';
   if (!/^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(out.meta.lang)) out.meta.lang = 'en';
 
-  for (const slot of Object.keys(ASSET_SLOTS)) out.assets[slot] = normalizeAssetRef(src.assets?.[slot]);
+  for (const slot of Object.keys(ASSET_SLOTS)) {
+    const given = src.assets && slot in src.assets ? src.assets[slot] : defaults.assets[slot];
+    out.assets[slot] = normalizeAssetRef(given);
+  }
   return out;
 }
 

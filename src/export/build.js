@@ -111,14 +111,15 @@ function htmlOpen(config) {
  * Resolve asset references to concrete URLs for a build mode.
  * Returns { config, files, warnings }.
  */
-function resolveAssets(config, assets, mode, art) {
+function resolveAssets(config, assets, mode, art, sources) {
   const out = stripAssetSources(config);
   const files = [];
   const warnings = [];
   for (const [slot, def] of Object.entries(ASSET_SLOTS)) {
     const ref = out.assets[slot];
     if (!ref) continue;
-    const asset = assets.get(ref.id);
+    const libBytes = ref.library && sources?.library?.[ref.library];
+    const asset = assets.get(ref.id) || (libBytes ? { bytes: libBytes, mime: 'audio/mpeg' } : null);
     if (!asset) {
       warnings.push(`${def.label} (“${ref.name}”) is not loaded in this session and was left out. Re-upload it to include it.`);
       out.assets[slot] = null;
@@ -126,7 +127,7 @@ function resolveAssets(config, assets, mode, art) {
     }
     if (mode === 'zip') {
       const ext = extensionFor(asset.mime) || 'bin';
-      const path = `assets/${def.folder}/${def.file}.${ext}`;
+      const path = ref.library ? `assets/${def.folder}/${ref.library}.mp3` : `assets/${def.folder}/${def.file}.${ext}`;
       files.push({ path, data: asset.bytes });
       out.assets[slot] = { ...ref, src: path };
     } else {
@@ -204,7 +205,7 @@ All paths are relative, so the site also works from a sub-folder.
   guest opens the invitation or presses the music button.
 - For larger changes, re-import your project backup into the generator and
   export again.
-`;
+${config.assets.music?.library ? '\n## Music\n\nThe background tone is an original composition from Wedding Invitation Studio\nand is free to use and share with this invitation.\n' : ''}`;
 }
 
 /**
@@ -238,7 +239,7 @@ export function buildSite({ config, assets = new Map(), sources, mode, art }) {
     return { html, warnings: [] };
   }
 
-  const { config: resolved, files: assetFiles, warnings } = resolveAssets(config, assets, mode, art);
+  const { config: resolved, files: assetFiles, warnings } = resolveAssets(config, assets, mode, art, sources);
   const families = fontsForConfig(resolved);
 
   if (mode === 'single') {

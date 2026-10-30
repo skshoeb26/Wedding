@@ -278,3 +278,19 @@ img { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* Built-in tone picker */
+.tone-list { display: grid; gap: 6px; }
+.tone-option {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px;
+  padding: 9px 10px; border: 1px solid var(--line-strong); border-radius: 10px; background: #fff;
+}
+.tone-option.is-selected { border-color: var(--rose); background: var(--rose-soft); box-shadow: inset 0 0 0 1px var(--rose); }
+.tone-option input { accent-color: var(--rose); margin: 0; }
+.tone-option label { display: flex; flex-direction: column; gap: 1px; cursor: pointer; min-width: 0; }
+.tone-title { font-weight: 700; font-size: 14px; }
+.tone-play {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--rose-strong); cursor: pointer; font-size: 12px;
+}
+.tone-play:hover, .tone-play.is-playing { background: var(--rose); color: #fff; border-color: var(--rose); }

@@ -106,12 +106,12 @@ export class Store {
   // Asset references in the config whose bytes are not in memory.
   missingAssets() {
     return Object.entries(this.config.assets)
-      .filter(([, ref]) => ref && !this.assets.has(ref.id))
+      .filter(([, ref]) => ref && !ref.library && !this.assets.has(ref.id))
       .map(([slot, ref]) => ({ slot, ref }));
   }
 
   sessionOnlyAssets() {
-    return Object.values(this.config.assets).filter((ref) => ref && this.assets.has(ref.id));
+    return Object.values(this.config.assets).filter((ref) => ref && !ref.library && this.assets.has(ref.id));
   }
 
   // ---- Drafts (configuration only; uploaded files stay in memory) --------

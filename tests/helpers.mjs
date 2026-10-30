@@ -16,7 +16,7 @@ export function nodeSources() {
   return loadSources({
     readText: (p) => readFile(path.join(ROOT, p), 'utf8'),
     readBytes: async (p) => new Uint8Array(await readFile(path.join(ROOT, p)))
-  });
+  }, { includeLibrary: true });
 }
 
 // 1x1 PNG and a tiny silent WAV for upload tests.

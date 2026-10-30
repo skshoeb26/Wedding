@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.resolve(ROOT, process.argv[2] || 'dist');
-const INCLUDE = ['index.html', 'assets', 'src', 'templates', 'vendor'];
+const INCLUDE = ['index.html', 'assets', 'audio', 'src', 'templates', 'vendor'];
 
 await rm(OUT, { recursive: true, force: true });
 await mkdir(OUT, { recursive: true });

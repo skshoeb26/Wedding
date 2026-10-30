@@ -142,6 +142,22 @@ check('switching to the envelope template', await frame().locator('.se-seal').wa
 await page.locator('.template-option', { hasText: 'Floral Book' }).click();
 await frame().locator('.fb-cover-names').waitFor({ timeout: 5000 });
 
+// ------------------------------------------------------------- built-in tones
+const tones = page.locator('.tone-option');
+check('tone picker lists no-music, six tones and own upload', (await tones.count()) === 8);
+check('a gentle tone is preselected', await page.locator('.tone-option.is-selected').filter({ hasText: 'Hijaz Dawn' }).count() === 1);
+check('preselected tone gives the preview a music button', await waitPreview(() => !!document.querySelector('.wis-music'), null, 6000));
+const rastPlay = tones.filter({ hasText: 'Rast Celebration' }).locator('.tone-play');
+await rastPlay.click();
+check('tone preview plays in the editor', await rastPlay.evaluate((b) => b.classList.contains('is-playing')).catch(() => false)
+  || await page.waitForFunction(() => !!document.querySelector('.tone-play.is-playing'), null, { timeout: 3000 }).then(() => true, () => false));
+await rastPlay.click();
+check('tone preview stops on second press', await page.locator('.tone-play.is-playing').count() === 0);
+await tones.filter({ hasText: 'No music' }).locator('input').check();
+check('choosing no music removes the music button', await waitPreview(() => !document.querySelector('.wis-music')));
+await tones.filter({ hasText: 'Daf Zaffa' }).locator('input').check();
+check('choosing a tone adds the music button', await waitPreview(() => !!document.querySelector('.wis-music'), null, 6000));
+
 // ------------------------------------------------------------- uploads
 const photo = await page.evaluate(async () => {
   const c = document.createElement('canvas');
@@ -158,8 +174,9 @@ const photoBuf = Buffer.from(photo);
 await page.locator('.field-asset', { hasText: 'Couple photo' }).locator('input[type=file]').setInputFiles({ name: 'us.png', mimeType: 'image/png', buffer: photoBuf });
 check('photo upload shows on a photo page', await waitPreview(() => /^data:image\/png/.test(document.querySelector('.fb-photo img')?.src || '')),
   await previewEval(() => [...document.querySelectorAll('.fb-leaf')].map((l) => l.dataset.page + ':' + (l.querySelector('img:not(.fb-corner):not(.fb-divider)')?.src || '').slice(0, 30)).join(' ')));
-await page.locator('.field-asset', { hasText: 'Background music' }).locator('input[type=file]').setInputFiles({ name: 'song.wav', mimeType: 'audio/wav', buffer: Buffer.from(silentWav(3)) });
+await page.locator('.field-asset', { hasText: 'Or upload your own' }).locator('input[type=file]').setInputFiles({ name: 'song.wav', mimeType: 'audio/wav', buffer: Buffer.from(silentWav(3)) });
 check('music upload adds the music control', await waitPreview(() => !!document.querySelector('.wis-music')));
+check('uploading music selects “My own upload”', await page.locator('.tone-option.is-selected').filter({ hasText: 'My own upload' }).count() === 1);
 await page.locator('.field-asset', { hasText: 'Background artwork' }).locator('input[type=file]').setInputFiles({ name: 'evil.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>') });
 check('SVG upload is rejected', await page.locator('#toast').filter({ hasText: /not accepted/ }).waitFor({ timeout: 3000 }).then(() => true, () => false));
 await page.locator('.field-asset', { hasText: 'Background artwork' }).locator('input[type=file]').setInputFiles({ name: 'fake.png', mimeType: 'image/png', buffer: Buffer.from('<html>not an image</html>') });
@@ -195,7 +212,7 @@ await openAllSections();
 check('draft restores text after reload', (await field("Bride's name").inputValue()) === tricky);
 check('missing uploads are explained after reload', /upload the couple photo, background music again/.test(await page.locator('#notices').textContent()));
 await page.locator('.field-asset', { hasText: 'Couple photo' }).locator('input[type=file]').setInputFiles({ name: 'us.png', mimeType: 'image/png', buffer: photoBuf });
-await page.locator('.field-asset', { hasText: 'Background music' }).locator('input[type=file]').setInputFiles({ name: 'song.wav', mimeType: 'audio/wav', buffer: Buffer.from(silentWav(3)) });
+await page.locator('.field-asset', { hasText: 'Or upload your own' }).locator('input[type=file]').setInputFiles({ name: 'song.wav', mimeType: 'audio/wav', buffer: Buffer.from(silentWav(3)) });
 await waitPreview(() => !!document.querySelector('.wis-music'));
 check('notice clears after re-upload', (await page.locator('#notices').textContent()).trim() === '');
 
@@ -459,6 +476,7 @@ for (const [label, viewport, touch] of [['zip-mobile', { width: 390, height: 844
   await s.pg.locator('.se-seal').click();
   await s.pg.waitForTimeout(2700);
   check('envelope: seal opens the letter', await s.pg.locator('.se.is-open').count() === 1);
+  check('envelope: the built-in tone starts on open', await s.pg.waitForFunction(() => document.querySelector('.wis-music')?.getAttribute('aria-pressed') === 'true', null, { timeout: 4000 }).then(() => true, () => false));
   check('envelope: letter comes fully out and the envelope drops away', await s.pg.waitForFunction(() => {
     const letter = document.querySelector('.se-letter').getBoundingClientRect();
     const pocket = getComputedStyle(document.querySelector('.se-pocket'));

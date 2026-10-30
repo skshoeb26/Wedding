@@ -127,7 +127,7 @@ export const PROJECT_FORMAT = 'wedding-invitation-studio/project';
 export function createProjectFile(config, assets) {
   const embedded = {};
   for (const ref of Object.values(config.assets)) {
-    if (!ref) continue;
+    if (!ref || ref.library) continue;
     const a = assets.get(ref.id);
     if (a) embedded[ref.id] = { name: a.name, mime: a.mime, size: a.size, data: bytesToBase64(a.bytes) };
   }
@@ -177,7 +177,7 @@ export function parseProjectFile(text) {
     }
   }
   for (const [slot, ref] of Object.entries(config.assets)) {
-    if (ref && !assets.has(ref.id)) warnings.push(`${ASSET_SLOTS[slot].label} (“${ref.name}”) is not included in this file. Please upload it again.`);
+    if (ref && !ref.library && !assets.has(ref.id)) warnings.push(`${ASSET_SLOTS[slot].label} (“${ref.name}”) is not included in this file. Please upload it again.`);
   }
   return { config, assets, warnings };
 }
