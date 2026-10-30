@@ -31,7 +31,8 @@ await rm(OUT, { recursive: true, force: true });
 await mkdir(OUT, { recursive: true });
 
 // A real 300x400 PNG for the couple photo (generated in the browser below).
-const editorServer = await serve(ROOT, 0);
+// EDITOR_DIR lets the suite run against the deployable build (npm run build).
+const editorServer = await serve(process.env.EDITOR_DIR ? path.resolve(process.env.EDITOR_DIR) : ROOT, 0);
 const EDITOR = `http://127.0.0.1:${editorServer.address().port}/`;
 const browser = await chromium.launch({ args: ['--autoplay-policy=user-gesture-required'] });
 
@@ -60,6 +61,7 @@ async function previewEval(fn, arg) {
 await page.goto(EDITOR);
 await page.evaluate(() => localStorage.clear());
 await page.goto(`${EDITOR}#/templates`);
+await page.locator('.template-card').nth(2).waitFor({ timeout: 5000 }).catch(() => {});
 check('gallery lists all three templates', (await page.locator('.template-card').count()) === 3);
 await page.locator('.template-card').first().getByRole('button', { name: 'Preview' }).click();
 const dialogOk = await page.frameLocator('#template-dialog-host iframe').locator('.fb-cover-names').waitFor({ timeout: 5000 }).then(() => true, () => false);

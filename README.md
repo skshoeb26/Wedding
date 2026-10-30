@@ -68,12 +68,41 @@ npm start            # node tools/serve.mjs  →  http://127.0.0.1:8080/
 No `npm install` is needed. The repository has no runtime dependencies:
 JSZip and the fonts are vendored in `vendor/`.
 
-## Deploy the generator (optional)
+## Deploy the generator publicly (free)
 
-The repository root is a static site. On Vercel, import the repository with
-framework preset **Other**, no build command, and `.` as the output
-directory. Netlify, Cloudflare Pages and GitHub Pages work the same way.
-(Nothing has been deployed for you.)
+Once deployed, anyone with the link can create and download their own
+invitation. Nothing is stored on the server. Each visitor's work stays in their
+own browser, so the generator needs no database and has no running costs
+beyond the free static-hosting tier.
+
+`npm run build` copies just the files the generator needs (`index.html`,
+`assets/`, `src/`, `templates/`, `vendor/`) into `dist/`. Tests and tooling are
+left out. Both hosts below are already configured to use it.
+
+**Vercel** (configured by `vercel.json`)
+1. Sign in at https://vercel.com with GitHub.
+2. *Add New → Project*, then import `skshoeb26/Wedding`.
+3. Keep the detected settings (build `node tools/build-site.mjs`, output
+   `dist`) and click **Deploy**. You get a URL like
+   `https://wedding-xxxx.vercel.app`.
+
+**Netlify** (configured by `netlify.toml`)
+1. Sign in at https://app.netlify.com with GitHub.
+2. *Add new site → Import an existing project → GitHub*, then choose
+   `skshoeb26/Wedding`.
+3. Keep the detected settings (build `node tools/build-site.mjs`, publish
+   `dist`) and click **Deploy**.
+
+Both hosts redeploy automatically on every push to the production branch
+(`main` by default) and create preview links for pull requests. You can add a
+custom domain in either dashboard.
+
+Check the build locally with:
+
+```bash
+npm run build && node tools/serve.mjs dist 8080   # http://127.0.0.1:8080/
+npm run test:dist                                  # full browser test against dist/
+```
 
 ## Host an exported invitation
 
@@ -93,6 +122,7 @@ The `README.md` inside every export repeats these steps.
 npm run check      # syntax check of every JS file and JSON validation
 npm test           # 29 unit tests: core runtime, schema, store, uploads, export engine
 npm run test:e2e   # 122 browser checks with Playwright + Chromium
+npm run test:dist  # the same browser checks against the deployable dist/ build
 ```
 
 The end-to-end test drives the real editor. It edits every text field and
@@ -133,7 +163,8 @@ templates/                 everything that ships inside an exported site
   sealed-envelope/         runtime.js + template.css
   garden-scroll/           runtime.js + template.css
 vendor/                    JSZip (MIT) and OFL fonts with their licences
-tools/                     static server and syntax checker
+tools/                     static server, syntax checker, build-site (dist/)
+vercel.json, netlify.toml  hosting configuration
 tests/                     unit and end-to-end tests
 docs/DESIGN.md             design notes, schema and architecture decisions
 ```
