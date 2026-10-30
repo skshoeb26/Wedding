@@ -144,7 +144,7 @@ await frame().locator('.fb-cover-names').waitFor({ timeout: 5000 });
 
 // ------------------------------------------------------------- built-in tones
 const tones = page.locator('.tone-option');
-check('tone picker lists own nasheed, the built-in tracks and no-audio', (await tones.count()) === 6);
+check('tone picker lists own nasheed, the built-in tracks and no-audio', (await tones.count()) === 7);
 check('the vocal nasheed is preselected', await page.locator('.tone-option.is-selected').filter({ hasText: 'Bārakallāhu' }).count() === 1);
 check('preselected tone gives the preview a music button', await waitPreview(() => !!document.querySelector('.wis-music'), null, 6000));
 const rastPlay = tones.filter({ hasText: 'Festive Daf' }).locator('.tone-play');

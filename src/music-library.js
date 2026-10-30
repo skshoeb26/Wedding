@@ -11,6 +11,13 @@ export const MUSIC_LIBRARY = [
     kind: 'vocal'
   },
   {
+    id: 'nasheed-barakallah-2',
+    title: 'Bārakallāhu Lakumā II',
+    description: 'Another rendition of the wedding du’a. Vocals and a light daf.',
+    instruments: 'Vocals · Daf',
+    kind: 'vocal'
+  },
+  {
     id: 'daf-zaffa',
     title: 'Daf & Claps',
     description: 'Upbeat zaffa rhythm on the daf with hand claps.',
