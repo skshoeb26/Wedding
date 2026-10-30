@@ -141,8 +141,8 @@ export const FORM = [
     id: 'music',
     title: 'Music',
     fields: [
-      { type: 'music-library', label: 'Choose background audio', hint: 'Daf rhythms only — no melodic instruments (about 40 seconds, looping, free to use). Press ▶ to listen.' },
-      { type: 'asset', slot: 'music', label: 'Or upload your own (MP3, M4A, OGG, WAV)', accept: 'audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/webm,audio/flac,.mp3,.m4a,.ogg,.wav,.flac', hint: 'For example a nasheed or Qur’an recitation you have permission to share. Browsers block automatic playback, so music starts when the guest taps to open (or presses the music button).' },
+      { type: 'music-library', label: 'Background nasheed', hint: 'Add your favourite nasheed, or pick a built-in one. Built-in audio has no melodic instruments. Press ▶ to listen.' },
+      { type: 'asset', slot: 'music', label: 'Your nasheed file (MP3, M4A, OGG, WAV)', accept: 'audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/webm,audio/flac,.mp3,.m4a,.ogg,.wav,.flac', hint: 'For example a nasheed or Qur’an recitation you have permission to share. Browsers block automatic playback, so music starts when the guest taps to open (or presses the music button).' },
       { type: 'text', path: 'invitation.music.title', label: 'Track title (optional)', maxLength: 120 },
       { type: 'toggle', path: 'invitation.music.startOnOpen', label: 'Start music when the invitation is opened' },
       { type: 'range', path: 'invitation.music.volume', label: 'Volume', min: 0.1, max: 1, step: 0.05, format: (v) => `${Math.round(v * 100)}%` }

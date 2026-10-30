@@ -294,3 +294,7 @@ img { max-width: 100%; }
   background: var(--surface); color: var(--rose-strong); cursor: pointer; font-size: 12px;
 }
 .tone-play:hover, .tone-play.is-playing { background: var(--rose); color: #fff; border-color: var(--rose); }
+
+.tone-group { margin: 8px 0 0; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.tone-option--own { grid-template-columns: auto 1fr; }
+.tone-option--own .tone-upload { grid-column: 2; justify-self: start; }

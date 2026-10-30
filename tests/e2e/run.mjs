@@ -144,7 +144,7 @@ await frame().locator('.fb-cover-names').waitFor({ timeout: 5000 });
 
 // ------------------------------------------------------------- built-in tones
 const tones = page.locator('.tone-option');
-check('tone picker lists no-music, the daf rhythms and own upload', (await tones.count()) === 5);
+check('tone picker lists own nasheed, the built-in tracks and no-audio', (await tones.count()) === 5);
 check('a daf rhythm is preselected', await page.locator('.tone-option.is-selected').filter({ hasText: 'Daf & Claps' }).count() === 1);
 check('preselected tone gives the preview a music button', await waitPreview(() => !!document.querySelector('.wis-music'), null, 6000));
 const rastPlay = tones.filter({ hasText: 'Festive Daf' }).locator('.tone-play');
@@ -153,7 +153,7 @@ check('tone preview plays in the editor', await rastPlay.evaluate((b) => b.class
   || await page.waitForFunction(() => !!document.querySelector('.tone-play.is-playing'), null, { timeout: 3000 }).then(() => true, () => false));
 await rastPlay.click();
 check('tone preview stops on second press', await page.locator('.tone-play.is-playing').count() === 0);
-await tones.filter({ hasText: 'No music' }).locator('input').check();
+await tones.filter({ hasText: 'No audio' }).locator('input').check();
 check('choosing no music removes the music button', await waitPreview(() => !document.querySelector('.wis-music')));
 await tones.filter({ hasText: 'Daf & Claps' }).locator('input').check();
 check('choosing a tone adds the music button', await waitPreview(() => !!document.querySelector('.wis-music'), null, 6000));
@@ -174,9 +174,11 @@ const photoBuf = Buffer.from(photo);
 await page.locator('.field-asset', { hasText: 'Couple photo' }).locator('input[type=file]').setInputFiles({ name: 'us.png', mimeType: 'image/png', buffer: photoBuf });
 check('photo upload shows on a photo page', await waitPreview(() => /^data:image\/png/.test(document.querySelector('.fb-photo img')?.src || '')),
   await previewEval(() => [...document.querySelectorAll('.fb-leaf')].map((l) => l.dataset.page + ':' + (l.querySelector('img:not(.fb-corner):not(.fb-divider)')?.src || '').slice(0, 30)).join(' ')));
-await page.locator('.field-asset', { hasText: 'Or upload your own' }).locator('input[type=file]').setInputFiles({ name: 'song.wav', mimeType: 'audio/wav', buffer: Buffer.from(silentWav(3)) });
+const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('.tone-upload').click()]);
+check('“Add your nasheed” opens the file picker', !!chooser);
+await chooser.setFiles({ name: 'song.wav', mimeType: 'audio/wav', buffer: Buffer.from(silentWav(3)) });
 check('music upload adds the music control', await waitPreview(() => !!document.querySelector('.wis-music')));
-check('uploading music selects “My own upload”', await page.locator('.tone-option.is-selected').filter({ hasText: 'My own upload' }).count() === 1);
+check('uploading music selects “Your own nasheed”', await page.locator('.tone-option.is-selected').filter({ hasText: 'Your own nasheed' }).count() === 1);
 await page.locator('.field-asset', { hasText: 'Background artwork' }).locator('input[type=file]').setInputFiles({ name: 'evil.svg', mimeType: 'image/svg+xml', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>') });
 check('SVG upload is rejected', await page.locator('#toast').filter({ hasText: /not accepted/ }).waitFor({ timeout: 3000 }).then(() => true, () => false));
 await page.locator('.field-asset', { hasText: 'Background artwork' }).locator('input[type=file]').setInputFiles({ name: 'fake.png', mimeType: 'image/png', buffer: Buffer.from('<html>not an image</html>') });
@@ -212,7 +214,7 @@ await openAllSections();
 check('draft restores text after reload', (await field("Bride's name").inputValue()) === tricky);
 check('missing uploads are explained after reload', /upload the couple photo, background music again/.test(await page.locator('#notices').textContent()));
 await page.locator('.field-asset', { hasText: 'Couple photo' }).locator('input[type=file]').setInputFiles({ name: 'us.png', mimeType: 'image/png', buffer: photoBuf });
-await page.locator('.field-asset', { hasText: 'Or upload your own' }).locator('input[type=file]').setInputFiles({ name: 'song.wav', mimeType: 'audio/wav', buffer: Buffer.from(silentWav(3)) });
+await page.locator('.field-asset', { hasText: 'Your nasheed file' }).locator('input[type=file]').setInputFiles({ name: 'song.wav', mimeType: 'audio/wav', buffer: Buffer.from(silentWav(3)) });
 await waitPreview(() => !!document.querySelector('.wis-music'));
 check('notice clears after re-upload', (await page.locator('#notices').textContent()).trim() === '');
 

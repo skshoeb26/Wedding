@@ -212,7 +212,7 @@ export class EditorForm {
       if (file) this.ctx.onUpload(f.slot, file);
     });
     this.bindings.push({ asset: f.slot, info, remove, def });
-    return h('div', { className: 'field field-asset' }, h('p', { className: 'label', text: f.label }), drop, input, f.hint ? h('p', { className: 'hint', text: f.hint }) : null);
+    return h('div', { className: 'field field-asset', 'data-slot': f.slot }, h('p', { className: 'label', text: f.label }), drop, input, f.hint ? h('p', { className: 'hint', text: f.hint }) : null);
   }
 
   list(f, path) {
@@ -366,9 +366,22 @@ export class EditorForm {
       this.bindings.push({ toneRadio: radio, value });
       return row;
     };
-    list.append(option('none', 'No music', 'Silent invitation'));
-    for (const t of MUSIC_LIBRARY) list.append(option(t.id, t.title, `${t.instruments} · ${t.description}`, t.id));
-    list.append(option('upload', 'My own upload', 'Use the file uploaded below'));
+    // Your own nasheed comes first: the most common choice.
+    const own = option('upload', 'Your own nasheed', 'Add a nasheed or recitation from your phone (MP3, M4A…)');
+    own.append(h('button', {
+      type: 'button', className: 'btn btn-secondary btn-small tone-upload',
+      onclick: () => this.root.querySelector('.field-asset[data-slot="music"] input[type=file]').click()
+    }, 'Add your nasheed'));
+    own.classList.add('tone-option--own');
+    list.append(own);
+    const groups = [['vocal', 'Vocal nasheeds'], ['daf', 'Daf rhythms']];
+    for (const [kind, heading] of groups) {
+      const tracks = MUSIC_LIBRARY.filter((t) => t.kind === kind);
+      if (!tracks.length) continue;
+      list.append(h('p', { className: 'tone-group', text: heading }));
+      for (const t of tracks) list.append(option(t.id, t.title, `${t.instruments} · ${t.description}`, t.id));
+    }
+    list.append(option('none', 'No audio', 'Silent invitation'));
     player.addEventListener('ended', () => this.stopPreview());
     return h('div', { className: 'field' }, h('p', { className: 'label', text: f.label }), f.hint ? h('p', { className: 'hint', text: f.hint }) : null, list);
   }
