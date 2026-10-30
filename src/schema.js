@@ -4,7 +4,7 @@
 // optional sections, theme, animation, asset references and site metadata.
 
 import { clone, isPlainObject } from './util.js';
-import { LIBRARY_IDS, libraryAssetId, libraryTrack } from './music-library.js';
+import { libraryAssetId, libraryTrack } from './music-library.js';
 
 export const SCHEMA_VERSION = 1;
 
@@ -174,7 +174,7 @@ export function createDefaultConfig(templateId = 'floral-book') {
     assets: {
       background: null,
       couplePhoto: null,
-      music: libraryMusicRef('hijaz-dawn')
+      music: libraryMusicRef('ajam-joy')
     },
     meta: {
       title: '',
@@ -223,15 +223,18 @@ function mergeShape(defaults, input) {
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
+// Tones that were replaced by happier ones keep working in saved drafts.
+const RENAMED_TONES = { 'hijaz-dawn': 'ajam-joy', 'bayati-serenity': 'sweet-nikah', 'kurd-blessing': 'sweet-nikah', 'nahawand-evening': 'wedding-zaffa' };
+
 // A built-in tone from the music library, referenced by id.
 export function libraryMusicRef(trackId) {
-  const t = libraryTrack(trackId);
+  const t = libraryTrack(RENAMED_TONES[trackId] || trackId);
   return t ? { id: libraryAssetId(t.id), name: `${t.title}.mp3`, mime: 'audio/mpeg', size: 0, library: t.id } : null;
 }
 
 function normalizeAssetRef(ref) {
   if (!isPlainObject(ref) || typeof ref.id !== 'string') return null;
-  if (ref.library !== undefined) return LIBRARY_IDS.includes(ref.library) ? libraryMusicRef(ref.library) : null;
+  if (ref.library !== undefined) return libraryMusicRef(ref.library);
   return {
     id: ref.id.slice(0, 64),
     name: typeof ref.name === 'string' ? ref.name.slice(0, 200) : 'file',

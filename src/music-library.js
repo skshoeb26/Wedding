@@ -3,44 +3,44 @@
 
 export const MUSIC_LIBRARY = [
   {
-    id: 'hijaz-dawn',
-    title: 'Hijaz Dawn',
-    description: 'Ney flute over soft qanun, in maqam Hijaz. Calm and classic.',
-    instruments: 'Ney · Qanun',
+    id: 'ajam-joy',
+    title: 'Joyful Ajam',
+    description: 'Bright, happy qanun melody with daf and claps.',
+    instruments: 'Qanun · Oud · Daf',
+    percussion: true
+  },
+  {
+    id: 'wedding-zaffa',
+    title: 'Wedding Zaffa',
+    description: 'A festive procession tune for the couple’s grand entrance.',
+    instruments: 'Qanun · Oud · Daf',
+    percussion: true
+  },
+  {
+    id: 'sweet-nikah',
+    title: 'Sweet Nikah',
+    description: 'Gentle and cheerful music-box melody. No drums.',
+    instruments: 'Bells · Qanun',
     percussion: false
   },
   {
-    id: 'bayati-serenity',
-    title: 'Bayati Serenity',
-    description: 'A slow, peaceful ney melody in maqam Bayati.',
-    instruments: 'Ney · Oud',
-    percussion: false
-  },
-  {
-    id: 'kurd-blessing',
-    title: 'Kurd Blessing',
-    description: 'Warm oud answered by qanun, in maqam Kurd.',
-    instruments: 'Oud · Qanun',
-    percussion: false
-  },
-  {
-    id: 'nahawand-evening',
-    title: 'Nahawand Evening',
-    description: 'Romantic oud and qanun with a gentle daf, in maqam Nahawand.',
+    id: 'garden-dabke',
+    title: 'Garden Dabke',
+    description: 'Lively, dancing oud tune with a dabke rhythm.',
     instruments: 'Oud · Qanun · Daf',
     percussion: true
   },
   {
     id: 'rast-celebration',
     title: 'Rast Celebration',
-    description: 'Joyful qanun and oud with a festive daf rhythm, in maqam Rast.',
+    description: 'Classic festive Arabic sound in maqam Rast.',
     instruments: 'Qanun · Oud · Daf',
     percussion: true
   },
   {
     id: 'daf-zaffa',
-    title: 'Daf Zaffa',
-    description: 'Wedding rhythm on the daf with hand claps only. No melodic instruments.',
+    title: 'Daf & Claps',
+    description: 'Upbeat daf rhythm and hand claps only. No melodic instruments.',
     instruments: 'Daf · Claps',
     percussion: true
   }

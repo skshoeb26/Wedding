@@ -145,7 +145,7 @@ await frame().locator('.fb-cover-names').waitFor({ timeout: 5000 });
 // ------------------------------------------------------------- built-in tones
 const tones = page.locator('.tone-option');
 check('tone picker lists no-music, six tones and own upload', (await tones.count()) === 8);
-check('a gentle tone is preselected', await page.locator('.tone-option.is-selected').filter({ hasText: 'Hijaz Dawn' }).count() === 1);
+check('a happy tone is preselected', await page.locator('.tone-option.is-selected').filter({ hasText: 'Joyful Ajam' }).count() === 1);
 check('preselected tone gives the preview a music button', await waitPreview(() => !!document.querySelector('.wis-music'), null, 6000));
 const rastPlay = tones.filter({ hasText: 'Rast Celebration' }).locator('.tone-play');
 await rastPlay.click();
@@ -155,7 +155,7 @@ await rastPlay.click();
 check('tone preview stops on second press', await page.locator('.tone-play.is-playing').count() === 0);
 await tones.filter({ hasText: 'No music' }).locator('input').check();
 check('choosing no music removes the music button', await waitPreview(() => !document.querySelector('.wis-music')));
-await tones.filter({ hasText: 'Daf Zaffa' }).locator('input').check();
+await tones.filter({ hasText: 'Daf & Claps' }).locator('input').check();
 check('choosing a tone adds the music button', await waitPreview(() => !!document.querySelector('.wis-music'), null, 6000));
 
 // ------------------------------------------------------------- uploads

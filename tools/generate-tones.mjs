@@ -1,6 +1,6 @@
-// Generates the built-in background tones: short, loopable, original
-// Arabic-style instrumentals in classical maqam scales, synthesised from
-// scratch (no samples), so they are free to bundle and redistribute.
+// Generates the built-in background tones: short, loopable, original,
+// upbeat Arabic-style instrumentals (maqam Ajam and Rast with daf rhythms),
+// synthesised from scratch (no samples), so they are free to bundle.
 //
 // Usage: node tools/generate-tones.mjs   (needs ffmpeg with libmp3lame)
 // Output: audio/library/<id>.mp3
@@ -30,6 +30,7 @@ function rng(seed) {
 
 // Maqam scales as semitone offsets of degrees 0..6 (quarter tones as .5).
 const MAQAM = {
+  ajam: [0, 2, 4, 5, 7, 9, 11],
   hijaz: [0, 1, 4, 5, 7, 8, 10],
   nahawand: [0, 2, 3, 5, 7, 8, 11],
   rast: [0, 2, 3.5, 5, 7, 9, 10.5],
@@ -158,9 +159,9 @@ function dum(rand) {
   let ph = 0;
   for (let i = 0; i < len; i++) {
     const t = i / SR;
-    const f = 58 + 70 * Math.exp(-t / 0.035);
+    const f = 88 + 80 * Math.exp(-t / 0.035);
     ph += (2 * Math.PI * f) / SR;
-    out[i] = Math.sin(ph) * Math.exp(-t / 0.22);
+    out[i] = (Math.sin(ph) + 0.45 * Math.sin(2 * ph) + 0.2 * Math.sin(3 * ph)) * Math.exp(-t / 0.18);
   }
   const thump = biquad(noise(Math.round(0.05 * SR), rand), 'lowpass', 900);
   for (let i = 0; i < thump.length; i++) out[i] += thump[i] * 0.6 * (1 - i / thump.length);
@@ -256,8 +257,8 @@ function daf(mix, pattern, bpm, fromBeat, toBeat, rand, gain = 1) {
       const at = (bar + pos) * beat;
       const v = vel * (0.9 + 0.2 * rand());
       if (kind === 'D') mixInto(mix, dum(rand), at, gain * v);
-      else if (kind === 'T') mixInto(mix, tek(rand), at, gain * 0.6 * v);
-      else if (kind === 'C') mixInto(mix, clap(rand), at, gain * 0.5 * v);
+      else if (kind === 'T') mixInto(mix, tek(rand, 0.8), at, gain * 0.9 * v);
+      else if (kind === 'C') mixInto(mix, clap(rand), at, gain * 0.9 * v);
     }
   }
 }
@@ -265,117 +266,146 @@ function daf(mix, pattern, bpm, fromBeat, toBeat, rand, gain = 1) {
 const MAQSUM = { beats: 4, hits: [[0, 'D'], [0.5, 'T', 0.7], [1.5, 'T', 0.8], [2, 'D'], [3, 'T', 0.8]] };
 const SOFT = { beats: 4, hits: [[0, 'D', 0.7], [2, 'T', 0.5], [2.5, 'D', 0.5], [3, 'T', 0.4]] };
 
+// Happy, festive writing: bright scales (Ajam is the major-sounding maqam),
+// lively tempos, a bouncing bass on the beat and chord accents off the beat.
+const CHORDS = { I: 0, ii: 1, IV: 3, V: 4, vi: 5 };
+
+// "bounce": bass on 1 and 3, qanun chord stabs on 2 and 4.
+// "arp": flowing eighth-note arpeggios (gentle, music-box feel).
+function accompany(mix, chords, { bpm, startBeat, tonic, scale, style, rand, gain = 1 }) {
+  const beat = 60 / bpm;
+  chords.forEach((name, bar) => {
+    const root = CHORDS[name];
+    const t0 = (startBeat + bar * 4) * beat;
+    if (style === 'bounce') {
+      mixInto(mix, pluck(degreeFreq(tonic, scale, root - 7), beat * 0.9, 'oud', rand), t0, 0.26 * gain);
+      mixInto(mix, pluck(degreeFreq(tonic, scale, root - 3), beat * 0.9, 'oud', rand), t0 + 2 * beat, 0.22 * gain);
+      for (const off of [1, 3]) {
+        for (const [k, d] of [root, root + 2, root + 4].entries()) {
+          mixInto(mix, pluck(degreeFreq(tonic, scale, d - 7), beat * 0.35, 'qanun', rand), t0 + off * beat + k * 0.012, 0.12 * gain);
+        }
+      }
+    } else {
+      const pattern = [0, 2, 4, 7, 4, 2, 4, 7];
+      pattern.forEach((d, i) => {
+        mixInto(mix, pluck(degreeFreq(tonic, scale, root + d - 7), beat * 0.6, 'qanun', rand), t0 + i * beat * 0.5, (i === 0 ? 0.2 : 0.13) * gain);
+      });
+      mixInto(mix, pluck(degreeFreq(tonic, scale, root - 7), beat * 3.5, 'oud', rand), t0, 0.16 * gain);
+    }
+  });
+}
+
+// Music-box bell: inharmonic partials, quick sparkle.
+function bell(freq, dur, rand) {
+  const len = Math.round((dur + 1.5) * SR);
+  const out = new Float32Array(len);
+  for (const [mult, amp, tau] of [[1, 1, 1.2], [2.76, 0.35, 0.5], [5.4, 0.15, 0.25], [8.93, 0.06, 0.12]]) {
+    const f = freq * mult;
+    if (f > SR / 2.2) continue;
+    const ph = rand() * 6.28;
+    for (let i = 0; i < len; i++) out[i] += amp * Math.exp(-i / SR / tau) * Math.sin((2 * Math.PI * f * i) / SR + ph);
+  }
+  return out;
+}
+
+function finalChord(mix, at, tonic, scale, rand, gain = 1) {
+  [0, 2, 4, 7].forEach((d, k) => mixInto(mix, pluck(degreeFreq(tonic, scale, d - 7), 2, 'qanun', rand), at + k * 0.03, 0.22 * gain));
+  mixInto(mix, pluck(degreeFreq(tonic, scale, -7), 2.5, 'oud', rand), at, 0.3 * gain);
+}
+
+const MAQSUM_FAST = { beats: 4, hits: [[0, 'D'], [0.5, 'T', 0.6], [1, 'T', 0.7], [1.5, 'T', 0.5], [2, 'D', 0.9], [2.5, 'T', 0.5], [3, 'T', 0.8], [3.5, 'T', 0.5]] };
+const CLAPS = { beats: 4, hits: [[1, 'C'], [3, 'C']] };
+const DABKE = { beats: 4, hits: [[0, 'D'], [1, 'T', 0.6], [1.5, 'D', 0.8], [2.5, 'T', 0.7], [3, 'D', 0.7], [3.5, 'T', 0.6]] };
+
+function song({ bpm, tonic, scale, melody, chords, rand, lead = 'qanun', style = 'bounce', drums, claps = true, introBars = 2 }) {
+  const beat = 60 / bpm;
+  const intro = introBars * 4;
+  const first = place(melody, bpm, intro);
+  const second = place(melody, bpm, first.endBeat);
+  const end = second.endBeat;
+  const len = Math.round((end * beat + 3) * SR);
+  const mix = new Float32Array(len);
+  // intro: accompaniment only, so the tune enters on a lift
+  accompany(mix, chords.slice(-introBars), { bpm, startBeat: 0, tonic, scale, style, rand, gain: 0.9 });
+  accompany(mix, chords, { bpm, startBeat: intro, tonic, scale, style, rand });
+  accompany(mix, chords, { bpm, startBeat: first.endBeat, tonic, scale, style, rand });
+  if (lead === 'bell') {
+    for (const n of first.notes.concat(second.notes)) mixInto(mix, bell(degreeFreq(tonic, scale, n.deg) * 2, n.dur, rand), n.at, 0.22);
+  } else {
+    playPlucks(mix, first.notes, tonic, scale, lead, 0.42, rand);
+    playPlucks(mix, second.notes, tonic, scale, 'qanun', 0.34, rand);
+    playPlucks(mix, second.notes, tonic / 2, scale, 'oud', 0.3, rand); // oud joins in unison the second time
+  }
+  if (drums) daf(mix, drums, bpm, 0, end, rand, 0.3);
+  if (claps) daf(mix, CLAPS, bpm, first.endBeat, end, rand, 0.55);
+  finalChord(mix, end * beat, tonic, scale, rand);
+  if (drums) mixInto(mix, dum(rand), end * beat, 0.6);
+  return mix;
+}
+
 const COMPOSITIONS = {
-  'hijaz-dawn': () => {
-    const bpm = 72, tonic = 293.66, scale = MAQAM.hijaz, rand = rng(11);
-    const mel = place([
-      [[4, 1.5], [5, 0.5], [4, 1], [3, 1], [2, 1.5], [3, 0.5], [2, 1], [1, 1]],
-      [[2, 1], [3, 1], [4, 2], [3, 0.5], [2, 0.5], [1, 1], [0, 2]],
-      [[4, 1], [5, 1], [6, 1], [7, 1], [6, 0.5], [5, 0.5], [4, 1], [5, 2]],
-      [[7, 1.5], [6, 0.5], [5, 1], [4, 1], [3, 0.5], [2, 0.5], [1, 0.5], [2, 0.5], [1, 1], [0, 1]],
-      [[null, 2], [0, 0.5], [1, 0.5], [2, 1], [4, 2], [3, 1], [2, 1]],
-      [[1, 1], [2, 0.5], [1, 0.5], [0, 6]]
-    ], bpm, 2);
-    const len = Math.round(((mel.endBeat + 2) * 60) / bpm * SR);
-    const mix = new Float32Array(len);
-    mixInto(mix, drone(tonic / 2, len, rand), 0, 0.09);
-    const ney = neyLine(mel.notes.map((n) => ({ at: n.at, dur: n.dur, freq: degreeFreq(tonic, scale, n.deg) })), rand, len);
-    mixInto(mix, ney, 0, 0.33);
-    // qanun arpeggios underneath
-    const arp = [];
-    for (let b = 0; b < mel.endBeat; b += 1) arp.push({ deg: [0, 4, 7, 4][b % 4] - 7, at: (b * 60) / bpm, dur: 0.8 });
-    playPlucks(mix, arp, tonic, scale, 'qanun', 0.13, rand);
-    return mix;
-  },
-  'nahawand-evening': () => {
-    const bpm = 84, tonic = 261.63, scale = MAQAM.nahawand, rand = rng(22);
-    const A = [
-      [[0, 0.5], [1, 0.5], [2, 1], [3, 1], [4, 1], [5, 1], [4, 0.5], [3, 0.5], [4, 2]],
-      [[4, 0.5], [5, 0.5], [4, 0.5], [3, 0.5], [2, 1], [3, 1], [2, 0.5], [1, 0.5], [0, 1], [1, 2]],
-      [[4, 1], [7, 1], [6, 0.5], [5, 0.5], [6, 1], [5, 0.5], [4, 0.5], [3, 0.5], [2, 0.5], [3, 2]],
-      [[2, 0.5], [3, 0.5], [4, 1], [3, 0.5], [2, 0.5], [1, 1], [0, 4]]
-    ];
-    const first = place(A, bpm, 0);
-    const second = place(A, bpm, first.endBeat);
-    const len = Math.round(((second.endBeat + 3) * 60) / bpm * SR);
-    const mix = new Float32Array(len);
-    mixInto(mix, drone(tonic / 2, len, rand), 0, 0.07);
-    playPlucks(mix, first.notes, tonic / 2, scale, 'oud', 0.5, rand);
-    playPlucks(mix, second.notes, tonic, scale, 'qanun', 0.3, rand);
-    playPlucks(mix, second.notes, tonic / 2, scale, 'oud', 0.28, rand);
-    daf(mix, SOFT, bpm, 0, second.endBeat, rand, 0.32);
-    return mix;
-  },
-  'rast-celebration': () => {
-    const bpm = 100, tonic = 261.63, scale = MAQAM.rast, rand = rng(33);
-    const A = [
+  'ajam-joy': () => song({
+    bpm: 112, tonic: 392, scale: MAQAM.ajam, rand: rng(101), drums: MAQSUM_FAST,
+    chords: ['I', 'IV', 'I', 'V', 'I', 'V', 'IV', 'I'],
+    melody: [
+      [[0, 0.5], [2, 0.5], [4, 0.5], [2, 0.5], [4, 1], [7, 1], [5, 0.5], [4, 0.5], [3, 0.5], [2, 0.5], [3, 1], [5, 1]],
+      [[4, 0.5], [5, 0.5], [4, 0.5], [2, 0.5], [4, 1], [2, 1], [1, 0.5], [2, 0.5], [3, 0.5], [1, 0.5], [4, 2]],
+      [[7, 0.5], [6, 0.5], [5, 0.5], [4, 0.5], [5, 1], [7, 1], [6, 0.5], [5, 0.5], [4, 0.5], [3, 0.5], [4, 1], [2, 1]],
+      [[3, 0.5], [2, 0.5], [1, 0.5], [2, 0.5], [3, 0.5], [4, 0.5], [6, 0.5], [7, 0.5], [7, 1], [4, 0.5], [2, 0.5], [0, 2]]
+    ]
+  }),
+  'wedding-zaffa': () => song({
+    bpm: 120, tonic: 349.23, scale: MAQAM.ajam, rand: rng(102), drums: MAQSUM_FAST, lead: 'qanun',
+    chords: ['I', 'V', 'I', 'I', 'IV', 'I', 'V', 'I'],
+    melody: [
+      [[4, 1], [4, 0.5], [5, 0.5], [4, 1], [2, 1], [3, 0.5], [4, 0.5], [3, 0.5], [2, 0.5], [1, 1], [4, 1]],
+      [[4, 1], [4, 0.5], [5, 0.5], [7, 1], [6, 1], [5, 0.5], [4, 0.5], [3, 0.5], [1, 0.5], [0, 2]],
+      [[7, 0.5], [7, 0.5], [7, 0.5], [6, 0.5], [5, 1], [4, 1], [5, 0.5], [6, 0.5], [5, 0.5], [4, 0.5], [3, 2]],
+      [[3, 0.5], [4, 0.5], [5, 0.5], [3, 0.5], [2, 1], [4, 1], [1, 0.5], [2, 0.5], [1, 0.5], [-1, 0.5], [0, 2]]
+    ]
+  }),
+  'sweet-nikah': () => song({
+    bpm: 96, tonic: 392, scale: MAQAM.ajam, rand: rng(103), lead: 'bell', style: 'arp', drums: null, claps: false,
+    chords: ['I', 'I', 'IV', 'ii', 'I', 'V', 'V', 'I'],
+    melody: [
+      [[4, 1.5], [5, 0.5], [4, 1], [2, 1], [0, 1], [2, 1], [4, 2]],
+      [[5, 1.5], [6, 0.5], [5, 1], [3, 1], [1, 1], [3, 1], [5, 2]],
+      [[7, 1.5], [6, 0.5], [5, 1], [4, 1], [3, 1], [2, 1], [1, 2]],
+      [[4, 1], [5, 1], [6, 1], [7, 1], [7, 4]]
+    ]
+  }),
+  'garden-dabke': () => song({
+    bpm: 126, tonic: 293.66, scale: MAQAM.ajam, rand: rng(104), drums: DABKE, lead: 'oud',
+    chords: ['I', 'IV', 'I', 'V', 'I', 'IV', 'V', 'I'],
+    melody: [
+      [[0, 0.5], [0, 0.5], [2, 0.5], [4, 0.5], [4, 0.5], [2, 0.5], [4, 1], [5, 0.5], [4, 0.5], [3, 0.5], [2, 0.5], [1, 1], [0, 1]],
+      [[4, 0.5], [4, 0.5], [5, 0.5], [7, 0.5], [7, 0.5], [5, 0.5], [7, 1], [6, 0.5], [5, 0.5], [4, 0.5], [3, 0.5], [2, 1], [4, 1]],
+      [[7, 0.5], [6, 0.5], [5, 0.5], [4, 0.5], [5, 0.5], [4, 0.5], [3, 0.5], [2, 0.5], [3, 0.5], [2, 0.5], [1, 0.5], [2, 0.5], [3, 1], [1, 1]],
+      [[4, 0.5], [2, 0.5], [4, 0.5], [5, 0.5], [4, 0.5], [2, 0.5], [1, 0.5], [2, 0.5], [0, 1], [4, 0.5], [2, 0.5], [0, 2]]
+    ]
+  }),
+  'rast-celebration': () => song({
+    bpm: 116, tonic: 261.63, scale: MAQAM.rast, rand: rng(105), drums: MAQSUM_FAST,
+    chords: ['I', 'I', 'IV', 'I', 'I', 'V', 'IV', 'I'],
+    melody: [
       [[0, 0.5], [1, 0.5], [2, 0.5], [3, 0.5], [4, 1], [4, 1], [5, 0.5], [4, 0.5], [3, 0.5], [2, 0.5], [3, 2]],
       [[2, 0.5], [3, 0.5], [4, 0.5], [5, 0.5], [4, 1], [2, 1], [1, 0.5], [2, 0.5], [1, 0.5], [0, 0.5], [1, 2]],
       [[4, 0.5], [5, 0.5], [6, 0.5], [7, 0.5], [7, 1], [6, 1], [5, 0.5], [6, 0.5], [5, 0.5], [4, 0.5], [5, 2]],
       [[4, 0.5], [3, 0.5], [2, 0.5], [3, 0.5], [4, 1], [2, 1], [1, 0.5], [2, 0.5], [1, 0.5], [1, 0.5], [0, 2]]
-    ];
-    const intro = 4;
-    const first = place(A, bpm, intro);
-    const second = place(A, bpm, first.endBeat);
-    const len = Math.round(((second.endBeat + 3) * 60) / bpm * SR);
-    const mix = new Float32Array(len);
-    playPlucks(mix, first.notes, tonic, scale, 'qanun', 0.4, rand);
-    playPlucks(mix, second.notes, tonic, scale, 'qanun', 0.3, rand);
-    playPlucks(mix, second.notes, tonic / 2, scale, 'oud', 0.4, rand);
-    daf(mix, MAQSUM, bpm, 0, second.endBeat, rand, 0.42);
-    daf(mix, { beats: 2, hits: [[1, 'C', 0.6]] }, bpm, first.endBeat, second.endBeat, rand, 0.5);
-    mixInto(mix, dum(rand), (second.endBeat * 60) / bpm, 0.6);
-    return mix;
-  },
-  'bayati-serenity': () => {
-    const bpm = 60, tonic = 293.66, scale = MAQAM.bayati, rand = rng(44);
-    const mel = place([
-      [[0, 2], [1, 1], [2, 1], [3, 3], [2, 0.5], [1, 0.5]],
-      [[2, 1], [1, 0.5], [0, 0.5], [1, 2], [0, 4]],
-      [[3, 1], [4, 1], [5, 2], [4, 1], [3, 0.5], [4, 0.5], [3, 2]],
-      [[2, 1], [3, 0.5], [2, 0.5], [1, 1], [2, 1], [1, 1], [0, 3]]
-    ], bpm, 2);
-    const len = Math.round(((mel.endBeat + 3) * 60) / bpm * SR);
-    const mix = new Float32Array(len);
-    mixInto(mix, drone(tonic / 2, len, rand), 0, 0.13);
-    mixInto(mix, neyLine(mel.notes.map((n) => ({ at: n.at, dur: n.dur, freq: degreeFreq(tonic, scale, n.deg) })), rand, len), 0, 0.36);
-    // a few soft oud notes marking each phrase
-    playPlucks(mix, [0, 8, 16, 24].map((b) => ({ deg: -7, at: ((b + 2) * 60) / bpm, dur: 1.5 })), tonic, scale, 'oud', 0.22, rand);
-    return mix;
-  },
-  'kurd-blessing': () => {
-    const bpm = 76, tonic = 293.66, scale = MAQAM.kurd, rand = rng(55);
-    const P = [
-      [[4, 1], [3, 0.5], [2, 0.5], [1, 1], [2, 1], [3, 1.5], [2, 0.5], [1, 2]],
-      [[1, 0.5], [2, 0.5], [3, 1], [4, 1], [5, 1], [4, 0.5], [3, 0.5], [2, 1], [1, 1], [0, 1]],
-      [[4, 1], [5, 0.5], [6, 0.5], [7, 2], [6, 0.5], [5, 0.5], [4, 1], [5, 2]],
-      [[4, 0.5], [3, 0.5], [2, 1], [3, 0.5], [2, 0.5], [1, 1], [0, 4]]
-    ];
-    const first = place(P, bpm, 0);
-    const second = place([P[0], P[3]], bpm, first.endBeat);
-    const len = Math.round(((second.endBeat + 3) * 60) / bpm * SR);
-    const mix = new Float32Array(len);
-    mixInto(mix, drone(tonic / 2, len, rand), 0, 0.06);
-    playPlucks(mix, first.notes, tonic / 2, scale, 'oud', 0.48, rand);
-    playPlucks(mix, second.notes, tonic, scale, 'qanun', 0.32, rand);
-    // qanun answers the oud an octave up at phrase ends
-    playPlucks(mix, first.notes.filter((n) => n.dur >= 2), tonic, scale, 'qanun', 0.18, rand);
-    return mix;
-  },
+    ]
+  }),
   'daf-zaffa': () => {
-    const bpm = 96, rand = rng(66);
-    const main = { beats: 4, hits: [[0, 'D'], [1, 'T', 0.7], [1.5, 'T', 0.6], [2, 'D', 0.9], [3, 'T', 0.8], [3.5, 'T', 0.5]] };
+    const bpm = 112, rand = rng(106);
     const fill = { beats: 4, hits: [[0, 'D'], [0.5, 'T', 0.5], [1, 'T', 0.7], [1.5, 'D', 0.8], [2, 'D'], [2.5, 'T', 0.6], [2.75, 'T', 0.5], [3, 'T', 0.7], [3.25, 'T', 0.6], [3.5, 'T', 0.8], [3.75, 'T', 0.9]] };
-    const claps = { beats: 4, hits: [[1, 'C'], [3, 'C']] };
-    const beats = 64;
+    const beats = 72;
     const len = Math.round(((beats + 3) * 60) / bpm * SR);
     const mix = new Float32Array(len);
-    daf(mix, { beats: 4, hits: [[0, 'D', 0.8], [2, 'D', 0.6]] }, bpm, 0, 8, rand, 0.8);
+    daf(mix, { beats: 4, hits: [[0, 'D', 0.8], [1, 'C', 0.8], [2, 'D', 0.7], [3, 'C', 0.8]] }, bpm, 0, 8, rand, 0.8);
     for (let b = 8; b < beats; b += 16) {
-      daf(mix, main, bpm, b, b + 12, rand, 0.8);
+      daf(mix, MAQSUM_FAST, bpm, b, b + 12, rand, 0.8);
       daf(mix, fill, bpm, b + 12, b + 16, rand, 0.8);
     }
-    daf(mix, claps, bpm, 24, beats, rand, 0.7);
+    daf(mix, { beats: 2, hits: [[0.5, 'C', 0.5], [1, 'C']] }, bpm, 8, beats, rand, 0.65);
     mixInto(mix, dum(rand), (beats * 60) / bpm, 0.9);
     return mix;
   }
@@ -384,7 +414,8 @@ const COMPOSITIONS = {
 // ---------------------------------------------------------------- output
 
 function finish(mix) {
-  reverb(mix, 0.2);
+  biquad(biquad(mix, 'highpass', 70), 'highpass', 70); // no rumble phone speakers cannot play
+  reverb(mix, 0.12);
   let peak = 0;
   for (const v of mix) peak = Math.max(peak, Math.abs(v));
   const gain = 0.89 / (peak || 1);

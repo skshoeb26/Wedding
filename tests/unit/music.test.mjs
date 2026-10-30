@@ -23,7 +23,8 @@ test('library references are validated', () => {
   const c = normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'rast-celebration', src: 'javascript:1' } } });
   assert.deepEqual(c.assets.music, libraryMusicRef('rast-celebration'));
   assert.equal(normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'not-a-track' } } }).assets.music, null);
-  assert.equal(createDefaultConfig().assets.music.library, 'hijaz-dawn', 'a gentle tone is preselected');
+  assert.equal(createDefaultConfig().assets.music.library, 'ajam-joy', 'a happy tone is preselected');
+  assert.equal(normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'bayati-serenity' } } }).assets.music.library, 'sweet-nikah', 'replaced tones map to their successors');
 });
 
 test('a chosen tone is packaged in the ZIP and embedded in the single file', () => {
@@ -50,6 +51,6 @@ test('backups reference tones instead of embedding them', () => {
   const file = createProjectFile(config, new Map([[config.assets.music.id, { bytes: new Uint8Array(10), mime: 'audio/mpeg' }]]));
   assert.deepEqual(JSON.parse(file).assets, {});
   const parsed = parseProjectFile(file);
-  assert.equal(parsed.config.assets.music.library, 'hijaz-dawn');
+  assert.equal(parsed.config.assets.music.library, 'ajam-joy');
   assert.deepEqual(parsed.warnings, []);
 });
