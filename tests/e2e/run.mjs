@@ -137,6 +137,12 @@ await page.locator('.swatch').nth(0).click();
 await page.locator('.template-option', { hasText: 'Garden Scroll' }).click();
 check('switching template re-renders the preview', await frame().locator('.gs-names').waitFor({ timeout: 5000 }).then(() => true, () => false));
 await shot(page, 'editor-garden-scroll');
+await previewEval(() => { const c = document.querySelector('.wis-curtain button'); if (c) c.click(); });
+await page.waitForTimeout(1200);
+await previewEval(() => document.querySelector('.gs-scroll-cue').click());
+await page.waitForTimeout(800);
+check('in-page link scrolls the preview instead of loading the editor into it',
+  page.frames().some((f) => f.url() === 'about:srcdoc') && await waitPreview(() => !!document.querySelector('.gs-names') && !document.querySelector('#view-editor')));
 await page.locator('.template-option', { hasText: 'Sealed Envelope' }).click();
 check('switching to the envelope template', await frame().locator('.se-seal').waitFor({ timeout: 5000 }).then(() => true, () => false));
 await page.locator('.template-option', { hasText: 'Floral Book' }).click();
