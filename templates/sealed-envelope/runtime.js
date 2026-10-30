@@ -170,6 +170,9 @@
       seal.focus({ preventScroll: true });
     }
     seal.addEventListener('click', function () { open(false); });
+    letter.addEventListener('click', function () {
+      if (rootEl.classList.contains('is-open')) main.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+    });
     envelope.addEventListener('click', function (e) { if (e.target !== seal) open(false); });
     function onKey(e) {
       if (!opened && (e.key === 'Enter' || e.key === ' ') && e.target === document.body) {

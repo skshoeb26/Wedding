@@ -115,7 +115,18 @@ artwork is recoloured from the theme palette. The ZIP export also writes the
 background as a real file (`assets/images/floral-background.svg`), so it can
 be replaced by hand, and the editor accepts an uploaded background instead.
 
-## 5. Adding a template
+## 5. Templates and shared sections
+
+`core.blocks(content, opts)` builds the standard invitation sections: names,
+blessings, one per event, countdown, photo, RSVP and closing. Each section is
+returned as a list of DOM nodes with generic `wis-b-*` classes. Royal Doors,
+Story Cards and Moonlit Night lay these blocks out as panels, slides or cards
+and only style them, so new templates stay small and every template gets the
+same tested escaping and link handling. Each registry entry names a suggested
+`preset` palette; `switchTemplate()` applies it unless the colours were
+customised.
+
+## 6. Adding a template
 
 1. Create `templates/<id>/runtime.js` that registers
    `InviteTemplates['<id>'] = { create }`. Use `ctx.core.content(config)` and
@@ -125,7 +136,7 @@ be replaced by hand, and the editor accepts an uploaded background instead.
    variant in `art.thumbnail()` if needed.
 4. Run `npm test && npm run test:e2e`.
 
-## 6. Known limitations
+## 7. Known limitations
 
 - The live reference site could not be opened from the build environment.
   Fidelity was checked against the screen recording (see §1).

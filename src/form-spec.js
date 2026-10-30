@@ -2,6 +2,7 @@
 // configuration path; the renderer in form.js turns this into DOM controls.
 
 import { FONT_CHOICES, THEME_PRESETS } from './schema.js';
+import { getTemplate } from './templates.js';
 
 const UTC_OFFSETS = [
   '-08:00', '-07:00', '-06:00', '-05:00', '-04:00', '-03:00', 'Z', '+01:00', '+02:00', '+03:00', '+03:30', '+04:00',
@@ -60,7 +61,7 @@ export const FORM = [
       { type: 'text', path: 'invitation.coverTagline', label: 'Cover tagline', maxLength: 120 },
       { type: 'toggle', path: 'sections.coverDate', label: 'Show the first event date on the cover' },
       { type: 'text', path: 'invitation.openPrompt', label: 'Open prompt text', maxLength: 80, placeholder: 'Template default, e.g. “Scroll to open the book”' },
-      { type: 'text', path: 'invitation.curtainPrompt', label: 'Curtain prompt', maxLength: 80, showIf: (c) => c.animation.intro === 'curtain' && c.template !== 'sealed-envelope' },
+      { type: 'text', path: 'invitation.curtainPrompt', label: 'Curtain prompt', maxLength: 80, showIf: (c) => c.animation.intro === 'curtain' && !!getTemplate(c.template).curtain },
       { type: 'toggle', path: 'sections.bismillah', label: 'Show Bismillah' },
       { type: 'text', path: 'invitation.bismillah', label: 'Bismillah text', dir: 'rtl', maxLength: 200, showIf: on('sections.bismillah') },
       { type: 'text', path: 'invitation.heading', label: 'Invitation heading', maxLength: 120 },
@@ -183,7 +184,7 @@ export const FORM = [
     fields: [
       { type: 'select', path: 'animation.intro', label: 'Opening reveal', options: [
         { value: 'curtain', label: 'Pearl curtain (tap to open)' }, { value: 'none', label: 'None — show the invitation directly' }],
-        hint: 'The Sealed Envelope template always opens with its envelope.' },
+        hint: 'Used by Floral Book, Garden Scroll and Story Cards. Sealed Envelope, Royal Doors and Moonlit Night have their own opening.' },
       { type: 'select', path: 'animation.pageTurn', label: 'Page transition (book template)', options: [
         { value: 'flip', label: '3D page turn' }, { value: 'slide', label: 'Slide' }, { value: 'fade', label: 'Fade' }] },
       { type: 'range', path: 'animation.pageTurnMs', label: 'Transition speed', min: 400, max: 1800, step: 50, format: (v) => `${(v / 1000).toFixed(2)} s` },

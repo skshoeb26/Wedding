@@ -316,7 +316,32 @@
       var body = defs(p, id) + '<rect width="600" height="800" fill="' + p.background + '"/>' +
         cluster(40, 60, 170, 35, p, id, 31) + cluster(570, 760, 180, -140, p, id, 32) +
         cluster(560, 120, 110, 150, p, id, 33) + cluster(40, 720, 110, -40, p, id, 34);
-      if (variant === 'envelope') {
+      if (variant === 'doors') {
+        var door = mix(p.primary, '#000000', 0.1);
+        body += '<path d="M150 650V330a150 150 0 0 1 300 0v320z" fill="' + mix(p.paper, p.accent, 0.2) + '" stroke="' + p.accent + '" stroke-width="8"/>' +
+          '<path d="M165 640V335a135 135 0 0 1 133-135v440z" fill="' + door + '" stroke="' + p.accent + '" stroke-width="3"/>' +
+          '<path d="M302 640V200a135 135 0 0 1 133 135v305z" fill="' + door + '" stroke="' + p.accent + '" stroke-width="3"/>' +
+          '<circle cx="282" cy="440" r="12" fill="none" stroke="' + p.goldLight + '" stroke-width="4"/>' +
+          '<circle cx="318" cy="440" r="12" fill="none" stroke="' + p.goldLight + '" stroke-width="4"/>' +
+          '<path d="M190 600V350a108 108 0 0 1 90-106M410 600V350a108 108 0 0 0-90-106" fill="none" stroke="' + p.accent + '" stroke-width="2"/>';
+      } else if (variant === 'stories') {
+        body += '<rect x="170" y="110" width="260" height="560" rx="26" fill="' + mix(p.primary, p.rose, 0.35) + '"/>';
+        for (var si = 0; si < 5; si++) {
+          body += '<rect x="' + (186 + si * 47) + '" y="128" width="40" height="5" rx="2.5" fill="' + (si < 2 ? '#ffffff' : mix(p.rose, '#ffffff', 0.4)) + '" opacity="0.9"/>';
+        }
+        body += '<rect x="215" y="330" width="170" height="16" rx="8" fill="' + p.paper + '"/>' +
+          '<rect x="240" y="360" width="120" height="9" rx="4.5" fill="' + p.goldLight + '"/>' +
+          '<circle cx="300" cy="260" r="38" fill="none" stroke="' + p.goldLight + '" stroke-width="4"/>';
+      } else if (variant === 'moon') {
+        body = defs(p, id) + '<rect width="600" height="800" fill="' + mix(p.primary, '#05070f', 0.6) + '"/>';
+        var mr = rng(77);
+        for (var st = 0; st < 60; st++) body += '<circle cx="' + n(mr() * 600) + '" cy="' + n(mr() * 800) + '" r="' + n(0.8 + mr() * 2) + '" fill="#fff7dd" opacity="' + n(0.4 + mr() * 0.6) + '"/>';
+        body += '<circle cx="430" cy="170" r="70" fill="' + p.goldLight + '"/><circle cx="460" cy="150" r="64" fill="' + mix(p.primary, '#05070f', 0.6) + '"/>';
+        [[150, 0, 1], [300, 0, 1.3], [470, 0, 0.9]].forEach(function (lp) {
+          body += '<g transform="translate(' + (lp[0] - 60 * lp[2]) + ' ' + lp[1] + ') scale(' + lp[2] + ')">' + lantern(colors).replace(/^<svg[^>]*>|<\/svg>$/g, '') + '</g>';
+        });
+        body += '<rect x="170" y="430" width="260" height="14" rx="7" fill="' + p.goldLight + '"/><rect x="215" y="462" width="170" height="8" rx="4" fill="' + p.accent + '"/>';
+      } else if (variant === 'envelope') {
         body += '<rect x="110" y="300" width="380" height="250" rx="10" fill="' + mix(p.paper, p.rose, 0.2) + '" stroke="' + p.accent +
           '" stroke-width="3"/><path d="M110 300L300 440L490 300" fill="' + mix(p.paper, p.rose, 0.35) + '" stroke="' + p.accent +
           '" stroke-width="3"/><circle cx="300" cy="440" r="38" fill="' + p.primary + '"/><circle cx="300" cy="440" r="28" fill="none" stroke="' +
@@ -480,6 +505,26 @@
     });
   }
 
+  // Hanging lantern with a glowing core (used by Moonlit Night).
+  function lantern(colors) {
+    return memo('lantern', colors, function (p) {
+      var id = 'l';
+      var g = 'url(#' + id + 'gold)';
+      var body = defs(p, id) +
+        '<radialGradient id="lglow" cx="50%" cy="55%" r="55%"><stop offset="0" stop-color="#fff6d6"/>' +
+        '<stop offset="0.45" stop-color="' + p.goldLight + '"/><stop offset="1" stop-color="' + p.accent + '" stop-opacity="0.25"/></radialGradient>' +
+        '<line x1="60" y1="0" x2="60" y2="40" stroke="' + p.accent + '" stroke-width="2"/>' +
+        '<circle cx="60" cy="44" r="6" fill="none" stroke="' + g + '" stroke-width="3"/>' +
+        '<path d="M42 58h36l-6-8H48z" fill="' + g + '"/>' +
+        '<path d="M40 60c-10 20-12 60 0 92h40c12-32 10-72 0-92z" fill="url(#lglow)" stroke="' + g + '" stroke-width="3"/>' +
+        '<path d="M60 60v92M47 62c-6 22-6 60 0 88M73 62c6 22 6 60 0 88" stroke="' + g + '" stroke-width="2" fill="none"/>' +
+        '<path d="M36 152h48l-8 12H44z" fill="' + g + '"/>' +
+        '<path d="M60 164l-6 10h12z" fill="' + g + '"/><circle cx="60" cy="180" r="4" fill="' + g + '"/>' +
+        '<path d="M40 58c4-14 36-14 40 0" fill="none" stroke="' + g + '" stroke-width="3"/>';
+      return svg(120, 190, body);
+    });
+  }
+
   function favicon(colors) {
     return memo('favicon', colors, function (p) {
       return svg(64, 64, defs(p, 'f') + rose(32, 34, 28, 10, p, 'f', false));
@@ -505,6 +550,7 @@
     pageFrame: pageFrame,
     ribbon: ribbon,
     paperFloral: paperFloral,
+    lantern: lantern,
     dataUri: dataUri
   };
 

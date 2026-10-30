@@ -61,8 +61,8 @@ async function previewEval(fn, arg) {
 await page.goto(EDITOR);
 await page.evaluate(() => localStorage.clear());
 await page.goto(`${EDITOR}#/templates`);
-await page.locator('.template-card').nth(2).waitFor({ timeout: 5000 }).catch(() => {});
-check('gallery lists all three templates', (await page.locator('.template-card').count()) === 3);
+await page.locator('.template-card').nth(5).waitFor({ timeout: 5000 }).catch(() => {});
+check('gallery lists all six templates', (await page.locator('.template-card').count()) === 6);
 await page.locator('.template-card').first().getByRole('button', { name: 'Preview' }).click();
 const dialogOk = await page.frameLocator('#template-dialog-host iframe').locator('.fb-cover-names').waitFor({ timeout: 5000 }).then(() => true, () => false);
 check('template preview dialog renders the book', dialogOk);
@@ -236,6 +236,8 @@ const phone = await browser.newPage({ viewport: { width: 390, height: 844 } });
 await phone.goto(`${EDITOR}#/editor`);
 await phone.locator('#editor-form details').first().waitFor();
 check('mobile editor has no horizontal overflow', await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+check('mobile editor has no empty scroll area below the screen', await phone.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1),
+  String(await phone.evaluate(() => document.documentElement.scrollHeight + ' vs ' + innerHeight)));
 await phone.locator('#tab-preview').click();
 check('mobile preview tab shows the invitation', await phone.frameLocator('#preview-host iframe').locator('.fb-cover-names').waitFor({ timeout: 5000 }).then(() => true, () => false));
 await shot(phone, 'editor-mobile-preview');
@@ -457,6 +459,11 @@ for (const [label, viewport, touch] of [['zip-mobile', { width: 390, height: 844
   await s.pg.locator('.se-seal').click();
   await s.pg.waitForTimeout(2700);
   check('envelope: seal opens the letter', await s.pg.locator('.se.is-open').count() === 1);
+  check('envelope: letter comes fully out and the envelope drops away', await s.pg.waitForFunction(() => {
+    const letter = document.querySelector('.se-letter').getBoundingClientRect();
+    const pocket = getComputedStyle(document.querySelector('.se-pocket'));
+    return letter.top >= 0 && letter.bottom <= innerHeight && Number(pocket.opacity) < 0.05;
+  }, null, { timeout: 3000 }).then(() => true, () => false));
   check('envelope: scrolling is unlocked', !(await s.pg.evaluate(() => document.documentElement.classList.contains('se-locked'))));
   await shot(s.pg, 'envelope-1-open');
   await s.pg.mouse.wheel(0, 1500);
@@ -465,6 +472,89 @@ for (const [label, viewport, touch] of [['zip-mobile', { width: 390, height: 844
   check('envelope: countdown renders', /^\d+$/.test(await s.pg.locator('.wis-count-num').first().textContent()));
   await s.pg.screenshot({ path: path.join(OUT, 'envelope-full.png'), fullPage: true });
   check('envelope: no external requests or errors', s.external.length === 0 && s.errs.length === 0 && s.failed.length === 0, [...s.external, ...s.errs, ...s.failed].join(' | '));
+  await s.ctx.close();
+  srv.close();
+}
+
+async function exportTemplate(id) {
+  const { switchTemplate } = await import('../../src/templates.js');
+  const sources = await nodeSources();
+  const config = normalizeConfig(switchTemplate(createDefaultConfig(), id));
+  const { files } = buildSite({ config, sources, mode: 'zip', art: InviteArt });
+  const dir = path.join(OUT, id);
+  for (const f of files) {
+    await mkdir(path.dirname(path.join(dir, f.path)), { recursive: true });
+    await writeFile(path.join(dir, f.path), f.data);
+  }
+  const srv = await serve(dir, 0);
+  const s = await verifySite(`http://127.0.0.1:${srv.address().port}/`, id, { viewport: { width: 390, height: 844 } });
+  return { s, srv };
+}
+
+{
+  const { s, srv } = await exportTemplate('royal-doors');
+  await s.pg.locator('.rd-open').waitFor({ timeout: 5000 });
+  check('royal doors: page is locked until opened', await s.pg.evaluate(() => document.documentElement.classList.contains('rd-locked')));
+  await shot(s.pg, 'royal-doors-0');
+  await s.pg.locator('.rd-open').click();
+  await s.pg.waitForTimeout(2200);
+  check('royal doors: doors swing open onto the names', await s.pg.evaluate(() =>
+    getComputedStyle(document.querySelector('.rd-door--left')).transform !== 'none' && Number(getComputedStyle(document.querySelector('.rd-inside')).opacity) > 0.95));
+  await shot(s.pg, 'royal-doors-1');
+  await s.pg.mouse.wheel(0, 1600);
+  await s.pg.waitForTimeout(1200);
+  check('royal doors: detail panels reveal', (await s.pg.locator('.rd-reveal.is-visible').count()) > 0);
+  check('royal doors: no horizontal overflow', await s.pg.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  check('royal doors: no external requests or errors', !s.external.length && !s.errs.length && !s.failed.length, [...s.external, ...s.errs, ...s.failed].join(' | '));
+  await s.ctx.close();
+  srv.close();
+}
+
+{
+  const { s, srv } = await exportTemplate('story-cards');
+  await s.pg.locator('.wis-curtain-pull').click();
+  await s.pg.waitForTimeout(2100);
+  const total = await s.pg.locator('.sc-slide').count();
+  check('story cards: page does not scroll (fits the screen)', await s.pg.evaluate(() => document.documentElement.scrollHeight <= innerHeight + 1));
+  await s.pg.mouse.click(320, 420);
+  await s.pg.waitForTimeout(700);
+  check('story cards: tapping the right side advances', await s.pg.locator('.sc-slide').nth(1).evaluate((n) => n.classList.contains('is-active')));
+  await s.pg.mouse.click(40, 420);
+  await s.pg.waitForTimeout(700);
+  check('story cards: tapping the left side goes back', await s.pg.locator('.sc-slide').nth(0).evaluate((n) => n.classList.contains('is-active')));
+  await s.pg.mouse.click(320, 420);
+  await s.pg.waitForTimeout(7600);
+  check('story cards: slides advance on their own', await s.pg.locator('.sc-slide').nth(2).evaluate((n) => n.classList.contains('is-active')));
+  await s.pg.mouse.move(320, 420);
+  await s.pg.mouse.down();
+  await s.pg.waitForTimeout(800);
+  check('story cards: press and hold pauses', await s.pg.locator('.sc.is-holding').count() === 1);
+  await s.pg.mouse.up();
+  await s.pg.waitForTimeout(300);
+  check('story cards: a long press does not skip a slide', await s.pg.locator('.sc-slide').nth(2).evaluate((n) => n.classList.contains('is-active')));
+  for (let i = 0; i < total; i++) await s.pg.keyboard.press('ArrowRight');
+  await s.pg.waitForTimeout(700);
+  check('story cards: reaches the last slide', await s.pg.locator('.sc-slide').nth(total - 1).evaluate((n) => n.classList.contains('is-active')));
+  await shot(s.pg, 'story-cards-last');
+  check('story cards: no external requests or errors', !s.external.length && !s.errs.length && !s.failed.length, [...s.external, ...s.errs, ...s.failed].join(' | '));
+  await s.ctx.close();
+  srv.close();
+}
+
+{
+  const { s, srv } = await exportTemplate('moonlit-night');
+  await s.pg.locator('.mn-light').waitFor({ timeout: 5000 });
+  await shot(s.pg, 'moonlit-night-0');
+  await s.pg.locator('.mn-light').click();
+  await s.pg.waitForTimeout(1500);
+  check('moonlit night: tapping lights the lanterns', await s.pg.locator('.mn.is-lit').count() === 1);
+  await shot(s.pg, 'moonlit-night-1');
+  await s.pg.mouse.wheel(0, 1600);
+  await s.pg.waitForTimeout(1200);
+  check('moonlit night: sections reveal on scroll', (await s.pg.locator('.mn-reveal.is-visible').count()) > 0);
+  check('moonlit night: countdown renders', /^\d+$/.test(await s.pg.locator('.wis-count-num').first().textContent()));
+  check('moonlit night: no horizontal overflow', await s.pg.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  check('moonlit night: no external requests or errors', !s.external.length && !s.errs.length && !s.failed.length, [...s.external, ...s.errs, ...s.failed].join(' | '));
   await s.ctx.close();
   srv.close();
 }

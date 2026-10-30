@@ -635,6 +635,108 @@
     return el(tag, { className: className || null, text: text, dir: 'auto' });
   }
 
+  // Standard invitation sections built from the content model. Templates
+  // lay them out (cards, slides, ...) and style the generic wis-b-* classes.
+  // opts: { divider(): Node, cleanups: [], onReplay(): void }
+  function blocks(C, opts) {
+    var L = C.labels;
+    var names = C.names.one + ' ' + C.names.joiner + ' ' + C.names.two;
+    var divider = opts.divider || function () { return null; };
+    function small(text, cls) {
+      return textBlock('p', text, 'wis-b-small' + (cls ? ' ' + cls : ''));
+    }
+    var out = [];
+    out.push({ id: 'intro', label: C.heading || names, nodes: [
+      arabic(C.bismillah, 'wis-b-bismillah'),
+      small(C.heading, 'wis-b-heading'),
+      C.family ? textBlock('p', C.family.intro, 'wis-b-lead') : null,
+      el('p', { className: 'wis-b-script wis-b-name', text: C.names.one, dir: 'auto' }),
+      small(C.names.full1),
+      C.family ? small(C.names.parents1, 'wis-b-muted') : null,
+      el('p', { className: 'wis-b-script wis-b-joiner', text: C.names.joiner, dir: 'auto' }),
+      el('p', { className: 'wis-b-script wis-b-name', text: C.names.two, dir: 'auto' }),
+      small(C.names.full2),
+      C.family ? small(C.names.parents2, 'wis-b-muted') : null
+    ] });
+    if (C.blessings || C.quote || C.message) {
+      var b = C.blessings, q = C.quote;
+      out.push({ id: 'blessings', label: (b && b.heading) || 'Blessings', nodes: [
+        b ? small(b.intro) : null,
+        q ? arabic(q.arabic, 'wis-b-quote-ar') : null,
+        q ? textBlock('p', q.translation, 'wis-b-quote') : null,
+        q ? small(q.reference, 'wis-b-muted') : null,
+        b && b.names.length ? divider() : null,
+        b && b.names.length ? small(b.heading, 'wis-b-label') : null,
+        b && b.names.length ? el('ul', { className: 'wis-b-list' }, b.names.map(function (l) { return el('li', { text: l, dir: 'auto' }); })) : null,
+        textBlock('p', C.message, 'wis-b-lead')
+      ] });
+    }
+    C.events.forEach(function (ev, i) {
+      var time = ev.timeText + (ev.endTimeText ? ' – ' + ev.endTimeText : '');
+      out.push({ id: 'event-' + i, label: ev.label || 'Event', nodes: [
+        el('h2', { className: 'wis-b-display', text: ev.label, dir: 'auto' }),
+        small(ev.dateText, 'wis-b-date'),
+        small(ev.hijriText, 'wis-b-muted'),
+        small([ev.note, time].filter(Boolean).join(' · ')),
+        divider(),
+        small(ev.venueName, 'wis-b-venue'),
+        small(ev.address, 'wis-b-muted'),
+        linkButton(ev.mapsHref, L.viewMap, 'map')
+      ] });
+    });
+    if (C.countdown && isFinite(C.countdown.targetMs)) {
+      var w = countdownWidget(C.countdown, L);
+      if (opts.cleanups) opts.cleanups.push(w.destroy);
+      out.push({ id: 'countdown', label: C.countdown.heading || 'Countdown', nodes: [small(C.countdown.heading, 'wis-b-label'), w] });
+    }
+    if (C.photo) {
+      out.push({ id: 'photo', label: C.photo.heading || 'Photo', nodes: [
+        small(C.photo.heading, 'wis-b-label'),
+        el('figure', { className: 'wis-b-photo' }, el('img', { src: C.photo.src, alt: C.photo.caption || names, loading: 'lazy' }),
+          C.photo.caption ? el('figcaption', { text: C.photo.caption, dir: 'auto' }) : null)
+      ] });
+    }
+    if (C.rsvp) {
+      var r = C.rsvp;
+      out.push({ id: 'rsvp', label: r.heading || 'RSVP', nodes: [
+        el('h2', { className: 'wis-b-display wis-b-display-sm', text: r.heading || 'RSVP', dir: 'auto' }),
+        textBlock('p', r.message, 'wis-b-lead'),
+        r.deadlineText ? el('p', { className: 'wis-b-small' }, L.rsvpBy + ' ', el('strong', { text: r.deadlineText })) : null,
+        r.contacts.length ? el('ul', { className: 'wis-b-list wis-b-contacts' }, r.contacts.map(function (c) {
+          return el('li', null, el('span', { text: c.name, dir: 'auto' }),
+            c.telHref ? el('a', { href: c.telHref }, icon('phone'), el('span', { text: c.phone, dir: 'ltr' })) : null);
+        })) : null,
+        el('div', { className: 'wis-b-actions' }, linkButton(r.whatsappHref, L.whatsapp, 'chat'), linkButton(r.link, L.rsvpLink, 'link'))
+      ] });
+    }
+    out.push({ id: 'closing', label: C.closing.heading || 'Thank you', nodes: [
+      small(C.closing.heading, 'wis-b-label'),
+      el('p', { className: 'wis-b-script wis-b-name', text: C.closing.signature || names, dir: 'auto' }),
+      textBlock('p', C.closing.message, 'wis-b-lead'),
+      small(C.closing.hashtag, 'wis-b-label'),
+      opts.onReplay ? el('button', { type: 'button', className: 'wis-btn', onclick: opts.onReplay }, icon('replay'), el('span', { text: L.readAgain })) : null
+    ] });
+    return out;
+  }
+
+  function revealOnScroll(rootEl, selector, reduced) {
+    var items = rootEl.querySelectorAll(selector);
+    if (reduced || !('IntersectionObserver' in root)) {
+      Array.prototype.forEach.call(items, function (n) { n.classList.add('is-visible'); });
+      return function () {};
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          en.target.classList.add('is-visible');
+          io.unobserve(en.target);
+        }
+      });
+    }, { threshold: 0.1 });
+    Array.prototype.forEach.call(items, function (n) { io.observe(n); });
+    return function () { io.disconnect(); };
+  }
+
   var api = {
     get: get,
     str: str,
@@ -659,6 +761,8 @@
     countdownWidget: countdownWidget,
     linkButton: linkButton,
     curtain: curtain,
+    blocks: blocks,
+    revealOnScroll: revealOnScroll,
     arabic: arabic,
     textBlock: textBlock,
     FONT_STACKS: FONT_STACKS,

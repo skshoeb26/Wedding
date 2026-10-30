@@ -11,11 +11,13 @@ account and no build step, and the exported site never contacts the generator.
 
 ![Sealed Envelope](docs/screenshots/sealed-envelope.png)
 
+![Royal Doors, Story Cards and Moonlit Night](docs/screenshots/new-templates.png)
+
 ![Editor with live preview](docs/screenshots/editor.png)
 
 ## Features
 
-- **Template gallery** with previews. Three templates are included:
+- **Template gallery** with previews. Six templates are included:
   - **Floral Book** (main template, modelled on the reference recording):
     a pearl-draped curtain (“Pull the strings to open”) reveals a dusty-rose
     book with a baroque gold oval medallion, Arabic calligraphy and lace
@@ -27,6 +29,15 @@ account and no build step, and the exported site never contacts the generator.
   - **Sealed Envelope**: tap the monogrammed wax seal, the flap lifts and the
     letter slides out, then the details unfold as cards.
   - **Garden Scroll**: a single scrolling page with reveal animations.
+  - **Royal Doors**: carved arched doors swing open onto the couple's names.
+    The details continue in arch-topped panels (emerald and gold).
+  - **Story Cards**: full-screen story-style slides with progress bars and
+    auto-advance. Tap right or left to move, press and hold to pause.
+  - **Moonlit Night**: a starry sky with a crescent moon and hanging lanterns
+    that light up at a tap. Details glow in gold-framed sections.
+
+  Each template comes with a suggested colour palette. Switching templates
+  applies it, unless you have customised your colours.
 - **Live editor**: two panels on desktop and Edit/Preview tabs on mobile. The
   preview updates as you type and can be shown at desktop or phone size.
   Undo/redo, reset to sample content, and an unsaved/saved draft indicator.
@@ -120,8 +131,8 @@ The `README.md` inside every export repeats these steps.
 
 ```bash
 npm run check      # syntax check of every JS file and JSON validation
-npm test           # 29 unit tests: core runtime, schema, store, uploads, export engine
-npm run test:e2e   # 122 browser checks with Playwright + Chromium
+npm test           # 30 unit tests: core runtime, schema, store, uploads, export engine
+npm run test:e2e   # 142 browser checks with Playwright + Chromium
 npm run test:dist  # the same browser checks against the deployable dist/ build
 ```
 
@@ -161,6 +172,7 @@ templates/                 everything that ships inside an exported site
   shared/base.css
   floral-book/             runtime.js + template.css
   sealed-envelope/         runtime.js + template.css
+  royal-doors/, story-cards/, moonlit-night/
   garden-scroll/           runtime.js + template.css
 vendor/                    JSZip (MIT) and OFL fonts with their licences
 tools/                     static server, syntax checker, build-site (dist/)

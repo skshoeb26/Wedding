@@ -159,3 +159,27 @@ body {
 }
 .is-reduced .wis-curtain-panel { transition: opacity .4s ease; }
 .is-reduced .wis-curtain.is-open .wis-curtain-panel { transform: none; opacity: 0; }
+
+/* Shared invitation sections (core.blocks). Templates set colours and sizes. */
+.wis-b-small { margin: 0; font: 400 .78em/1.6 var(--wis-font-heading); letter-spacing: .14em; text-transform: uppercase; overflow-wrap: anywhere; }
+.wis-b-label { letter-spacing: .22em; color: var(--wis-accent-deep); }
+.wis-b-muted { color: var(--wis-muted); }
+.wis-b-heading { max-width: 26em; line-height: 1.8; }
+.wis-b-lead { margin: 0; font-size: 1.06em; line-height: 1.6; max-width: 32em; overflow-wrap: anywhere; }
+.wis-b-script { margin: 0; font-family: var(--wis-font-script); line-height: 1.1; overflow-wrap: anywhere; }
+.wis-b-name { font-size: 2.8em; }
+.wis-b-joiner { font-size: 1.7em; color: var(--wis-accent); }
+.wis-b-bismillah { margin: 0; font-family: var(--wis-font-calligraphy); font-size: 1.5em; }
+.wis-b-quote-ar { margin: 0; font-family: var(--wis-font-calligraphy); font-size: 1.55em; }
+.wis-b-quote { margin: 0; font-style: italic; font-size: 1.1em; line-height: 1.55; max-width: 30em; }
+.wis-b-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font: 400 .82em/1.5 var(--wis-font-heading); letter-spacing: .1em; text-transform: uppercase; }
+.wis-b-contacts a { color: inherit; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.wis-b-display { margin: 0; font: 400 3em/1.05 var(--wis-font-body); overflow-wrap: anywhere; }
+.wis-b-display-sm { font-size: 2.3em; }
+.wis-b-date { font-size: .95em; }
+.wis-b-venue { font-size: .92em; }
+.wis-b-photo { margin: 0; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.wis-b-photo img { width: min(100%, 340px); aspect-ratio: 4 / 5; object-fit: cover; border-radius: 170px 170px 12px 12px; border: 5px solid var(--wis-paper); outline: 1px solid var(--wis-accent); }
+.wis-b-photo figcaption { font-style: italic; color: var(--wis-muted); }
+.wis-b-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.wis-b-actions:empty { display: none; }

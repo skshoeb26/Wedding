@@ -3,7 +3,7 @@
 
 import { FORM } from './form-spec.js';
 import { ASSET_SLOTS, THEME_PRESETS, newEvent } from './schema.js';
-import { TEMPLATES } from './templates.js';
+import { TEMPLATES, switchTemplate } from './templates.js';
 import { formatBytes, getPath } from './util.js';
 
 const Core = globalThis.InviteCore;
@@ -159,7 +159,7 @@ export class EditorForm {
     for (const t of TEMPLATES) {
       const id = nextId(t.id);
       const radio = h('input', { type: 'radio', name, id, value: t.id });
-      radio.addEventListener('change', () => radio.checked && this.store.update((c) => { c.template = t.id; }, 'template'));
+      radio.addEventListener('change', () => radio.checked && this.store.update((c) => switchTemplate(c, t.id), 'template'));
       wrap.append(h('label', { for: id, className: 'template-option' }, radio, h('span', { className: 'template-option-name', text: t.name }), h('span', { className: 'hint', text: t.tagline })));
       this.bindings.push({ path, control: radio, f: { type: 'radio' } });
     }

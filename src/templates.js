@@ -1,6 +1,8 @@
 // Template registry. Each template provides a runtime script and stylesheet
 // that render the shared configuration schema.
 
+import { THEME_PRESETS } from './schema.js';
+
 export const SHARED_FILES = {
   core: 'templates/shared/core.js',
   art: 'templates/shared/art.js',
@@ -19,6 +21,8 @@ export const TEMPLATES = [
     runtime: 'templates/floral-book/runtime.js',
     css: 'templates/floral-book/template.css',
     thumbnailVariant: 'book',
+    preset: 'dusty-rose',
+    curtain: true,
     recommendedExport: 'zip'
   },
   {
@@ -31,6 +35,8 @@ export const TEMPLATES = [
     runtime: 'templates/garden-scroll/runtime.js',
     css: 'templates/garden-scroll/template.css',
     thumbnailVariant: 'scroll',
+    preset: 'sage-ivory',
+    curtain: true,
     recommendedExport: 'zip'
   },
   {
@@ -43,6 +49,47 @@ export const TEMPLATES = [
     runtime: 'templates/sealed-envelope/runtime.js',
     css: 'templates/sealed-envelope/template.css',
     thumbnailVariant: 'envelope',
+    preset: 'dusty-rose',
+    recommendedExport: 'zip'
+  },
+  {
+    id: 'royal-doors',
+    name: 'Royal Doors',
+    tagline: 'Carved arched doors swing open',
+    description:
+      'A carved doorway set in a gold arch. Guests tap the door rings, the doors swing open onto the couple\'s names, and the details continue in arch-topped panels.',
+    features: ['Door opening', 'Arch panels', 'Countdown', 'Music control'],
+    runtime: 'templates/royal-doors/runtime.js',
+    css: 'templates/royal-doors/template.css',
+    thumbnailVariant: 'doors',
+    preset: 'emerald-gold',
+    recommendedExport: 'zip'
+  },
+  {
+    id: 'story-cards',
+    name: 'Story Cards',
+    tagline: 'Tap through full-screen story slides',
+    description:
+      'Full-screen slides that play like a social-media story, with progress bars and auto-advance. Tap the right side to go forward, the left side to go back, and press and hold to pause.',
+    features: ['Story slides', 'Auto-advance', 'Countdown', 'Music control'],
+    runtime: 'templates/story-cards/runtime.js',
+    css: 'templates/story-cards/template.css',
+    thumbnailVariant: 'stories',
+    preset: 'blush-burgundy',
+    curtain: true,
+    recommendedExport: 'zip'
+  },
+  {
+    id: 'moonlit-night',
+    name: 'Moonlit Night',
+    tagline: 'Lanterns glow under a crescent moon',
+    description:
+      'A night sky with twinkling stars, a crescent moon and hanging lanterns that light up at a tap. The details glow in gold-framed sections as guests scroll.',
+    features: ['Lantern glow', 'Starry sky', 'Countdown', 'Music control'],
+    runtime: 'templates/moonlit-night/runtime.js',
+    css: 'templates/moonlit-night/template.css',
+    thumbnailVariant: 'moon',
+    preset: 'midnight-gold',
     recommendedExport: 'zip'
   }
 ];
@@ -51,6 +98,21 @@ export const TEMPLATE_IDS = TEMPLATES.map((t) => t.id);
 
 export function getTemplate(id) {
   return TEMPLATES.find((t) => t.id === id) || TEMPLATES[0];
+}
+
+// Switch template. Colours that still match a built-in palette follow the
+// new template's suggested palette; customised colours are kept.
+export function switchTemplate(config, id) {
+  const t = getTemplate(id);
+  config.template = t.id;
+  const colors = config.theme.colors;
+  const onPreset = Object.values(THEME_PRESETS).some((p) =>
+    Object.entries(p.colors).every(([k, v]) => (colors[k] || '').toLowerCase() === v));
+  if (onPreset && t.preset && THEME_PRESETS[t.preset]) {
+    config.theme.preset = t.preset;
+    config.theme.colors = { ...THEME_PRESETS[t.preset].colors };
+  }
+  return config;
 }
 
 // Locally bundled OFL fonts. `families` maps a theme font name to its files.

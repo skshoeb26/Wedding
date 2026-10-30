@@ -85,3 +85,15 @@ test('older drafts gain new fields with defaults', () => {
   assert.match(c.invitation.blessings.heading, /blessings/);
   assert.equal(normalizeConfig({ ...old, animation: { intro: 'fireworks' } }).animation.intro, 'curtain');
 });
+
+test('switching template applies its palette unless colours were customised', async () => {
+  const { switchTemplate } = await import('../../src/templates.js');
+  const c = createDefaultConfig();
+  switchTemplate(c, 'moonlit-night');
+  assert.equal(c.template, 'moonlit-night');
+  assert.equal(c.theme.preset, 'midnight-gold');
+  c.theme.colors.primary = '#123456';
+  switchTemplate(c, 'royal-doors');
+  assert.equal(c.template, 'royal-doors');
+  assert.equal(c.theme.colors.primary, '#123456', 'custom colours are kept');
+});

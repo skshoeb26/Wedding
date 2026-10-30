@@ -34,6 +34,10 @@ export const THEME_PRESETS = {
     name: 'Midnight & Gold',
     colors: { primary: '#2f3b5c', rose: '#cfa7a9', accent: '#c4a062', paper: '#fdf8ee', ink: '#2a2f40', background: '#d9d4cf' }
   },
+  'emerald-gold': {
+    name: 'Emerald & Gold',
+    colors: { primary: '#1f5246', rose: '#e2c2b0', accent: '#c9a45c', paper: '#fbf6ea', ink: '#24342f', background: '#d6dccf' }
+  },
   'blush-burgundy': {
     name: 'Blush & Burgundy',
     colors: { primary: '#7a2e3d', rose: '#e8b4b8', accent: '#b98e57', paper: '#fff8f4', ink: '#45222a', background: '#f4dcdc' }
@@ -228,7 +232,7 @@ function normalizeAssetRef(ref) {
   };
 }
 
-export function normalizeConfig(input, templateIds = ['floral-book', 'garden-scroll', 'sealed-envelope']) {
+export function normalizeConfig(input, templateIds = ['floral-book', 'garden-scroll', 'sealed-envelope', 'royal-doors', 'story-cards', 'moonlit-night']) {
   const src = isPlainObject(input) ? input : {};
   const templateId = templateIds.includes(src.template) ? src.template : templateIds[0];
   const defaults = createDefaultConfig(templateId);

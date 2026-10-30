@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSite, verifyZipFiles, SINGLE_FILE_WARN_BYTES } from '../../src/export/build.js';
 import { createDefaultConfig, normalizeConfig } from '../../src/schema.js';
+import { TEMPLATE_IDS } from '../../src/templates.js';
 import { nodeSources, InviteArt, PNG_1PX, silentWav, JSZip } from '../helpers.mjs';
 
 const sources = await nodeSources();
@@ -107,7 +108,7 @@ test('only fonts used by the theme are bundled', () => {
 });
 
 test('each template bundles only its own runtime', () => {
-  for (const id of ['floral-book', 'garden-scroll', 'sealed-envelope']) {
+  for (const id of TEMPLATE_IDS) {
     const config = normalizeConfig({ ...createDefaultConfig(), template: id });
     const { files } = buildSite({ config, sources, mode: 'zip', art: InviteArt });
     const js = files.find((f) => f.path === 'assets/js/app.js').data;

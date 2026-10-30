@@ -5,9 +5,9 @@ import { buildSite, verifyZipFiles, SINGLE_FILE_LIMIT_BYTES } from './export/bui
 import { loadBrowserSources } from './export/sources.js';
 import { EditorForm } from './form.js';
 import { Preview } from './preview.js';
-import { ASSET_SLOTS, createDefaultConfig, normalizeConfig } from './schema.js';
+import { ASSET_SLOTS, THEME_PRESETS, createDefaultConfig, normalizeConfig } from './schema.js';
 import { Store } from './store.js';
-import { TEMPLATES, TEMPLATE_IDS, getTemplate } from './templates.js';
+import { TEMPLATES, TEMPLATE_IDS, getTemplate, switchTemplate } from './templates.js';
 import { debounce, formatBytes, slug } from './util.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -145,7 +145,7 @@ function renderGallery() {
       const card = document.createElement('article');
       card.className = 'template-card';
       const img = document.createElement('img');
-      img.src = globalThis.InviteArt.dataUri(globalThis.InviteArt.thumbnail(store.config.theme.colors, t.thumbnailVariant));
+      img.src = globalThis.InviteArt.dataUri(globalThis.InviteArt.thumbnail(THEME_PRESETS[t.preset]?.colors || store.config.theme.colors, t.thumbnailVariant));
       img.alt = `${t.name} template thumbnail`;
       img.width = 300;
       img.height = 400;
@@ -187,14 +187,14 @@ let dialogTemplate = null;
 function openTemplatePreview(id) {
   dialogTemplate = id;
   $('#template-dialog-title').textContent = `${getTemplate(id).name} — preview`;
-  const sample = normalizeConfig({ ...createDefaultConfig(id), theme: store.config.theme }, TEMPLATE_IDS);
+  const sample = normalizeConfig(switchTemplate(createDefaultConfig(id), id), TEMPLATE_IDS);
   dialogPreview = new Preview($('#template-dialog-host'), { sources, getConfig: () => sample, getAsset: () => null });
   dialogPreview.mount();
   ui.templateDialog.showModal();
 }
 
 function useTemplate(id) {
-  if (store.config.template !== id) store.update((c) => { c.template = id; }, 'template');
+  if (store.config.template !== id) store.update((c) => switchTemplate(c, id), 'template');
   location.hash = '#/editor';
 }
 
