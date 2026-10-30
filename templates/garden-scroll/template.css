@@ -1,0 +1,89 @@
+/* Template: Garden Scroll */
+.gs { font-size: calc(18px * var(--wis-text-scale)); background: var(--wis-paper); }
+.gs p { margin: 0; overflow-wrap: anywhere; }
+
+.gs-hero {
+  position: relative;
+  min-height: 100svh;
+  display: grid; place-items: center;
+  padding: 72px 16px 40px;
+  overflow: hidden;
+}
+.gs-hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gs-hero-card {
+  position: relative;
+  width: min(100%, 460px);
+  padding: 72px 30px 64px;
+  border-radius: 240px 240px 18px 18px;
+  background: color-mix(in srgb, var(--wis-paper) 92%, transparent);
+  border: 1px solid var(--wis-accent);
+  outline: 6px solid color-mix(in srgb, var(--wis-paper) 70%, transparent);
+  box-shadow: 0 24px 60px -18px rgba(60, 25, 25, .45);
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  overflow: hidden;
+}
+.gs-corner { position: absolute; width: 130px; pointer-events: none; }
+.gs-corner--tl { left: -6px; top: 40px; }
+.gs-corner--br { right: -6px; bottom: -6px; transform: rotate(180deg); }
+.gs-bismillah { font-family: var(--wis-font-calligraphy); font-size: 1.5em; color: var(--wis-primary); }
+.gs-eyebrow {
+  font: 600 .72em/1.5 var(--wis-font-heading);
+  letter-spacing: .26em; text-transform: uppercase; color: var(--wis-accent-deep);
+}
+.gs-names {
+  margin: 0; display: flex; flex-direction: column;
+  font: 400 clamp(2.6em, 13vw, 3.6em)/1.05 var(--wis-font-script);
+  color: var(--wis-primary); overflow-wrap: anywhere;
+}
+.gs-amp { color: var(--wis-accent); font-size: .6em; }
+.gs-hero-date { font: 600 .85em var(--wis-font-heading); letter-spacing: .2em; text-transform: uppercase; }
+.gs-scroll-cue { margin-top: 10px; font-size: .75em; }
+
+.gs-main { max-width: 760px; margin: 0 auto; padding: 24px 18px 90px; }
+.gs-section {
+  text-align: center;
+  padding: 56px 8px;
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--wis-accent) 30%, transparent);
+}
+.gs-section:last-child { border-bottom: 0; }
+.gs-reveal { opacity: 0; transform: translateY(26px); transition: opacity .9s ease, transform .9s ease; }
+.gs-reveal.is-visible { opacity: 1; transform: none; }
+.gs-divider { width: min(280px, 70%); }
+.gs-lead { font-size: 1.12em; line-height: 1.6; max-width: 34em; }
+.gs-script { font-family: var(--wis-font-script); color: var(--wis-primary); font-size: 2.6em; line-height: 1.1; }
+.gs-couple { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.gs-full { font: 600 .78em var(--wis-font-heading); letter-spacing: .16em; text-transform: uppercase; }
+.gs-muted { color: var(--wis-muted); font-style: italic; }
+.gs-quote-ar { font-size: 1.5em; color: var(--wis-primary); }
+.gs-quote-text { font-style: italic; font-size: 1.1em; max-width: 32em; line-height: 1.6; }
+.gs-event-grid { display: grid; gap: 20px; width: 100%; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.gs-event {
+  padding: 30px 20px;
+  border: 1px solid color-mix(in srgb, var(--wis-accent) 55%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--wis-paper) 88%, var(--wis-rose));
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+}
+.gs-event-title { margin: 0; font-weight: 400; }
+.gs-event-date { font: 600 1.05em var(--wis-font-heading); }
+.gs-event-time { font: 600 .85em var(--wis-font-heading); letter-spacing: .14em; text-transform: uppercase; }
+.gs-venue { font: 600 1.15em var(--wis-font-heading); color: var(--wis-primary); }
+.gs .wis-btn { font-size: .72em; }
+.gs-photo figure { margin: 0; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.gs-photo img { width: min(100%, 380px); aspect-ratio: 4/5; object-fit: cover; border-radius: 200px 200px 14px 14px; border: 6px solid #fff; outline: 1px solid var(--wis-accent); }
+.gs-photo figcaption { font-style: italic; color: var(--wis-muted); }
+.gs-contacts { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.gs-contacts li { display: flex; flex-direction: column; gap: 2px; }
+.gs-contacts a { color: var(--wis-primary); display: inline-flex; gap: 6px; align-items: center; justify-content: center; }
+.gs-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.gs-closing-names { font-size: 2em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gs-reveal { opacity: 1; transform: none; transition: none; }
+}
+.gs.is-reduced .gs-reveal { opacity: 1; transform: none; transition: none; }
+@media print {
+  .gs-reveal { opacity: 1; transform: none; }
+}
