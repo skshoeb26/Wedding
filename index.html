@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wedding Invitation Studio</title>
+  <meta name="description" content="Create an animated wedding invitation website in your browser and download it as a ready-to-host static site. No account, no backend.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="src/editor.css">
+  <script src="vendor/jszip/jszip.min.js" defer></script>
+  <script src="templates/shared/art.js" defer></script>
+  <script src="templates/shared/core.js" defer></script>
+  <script type="module" src="src/main.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="app-header">
+    <a class="brand" href="#/templates" aria-label="Wedding Invitation Studio — templates">
+      <img src="assets/favicon.svg" alt="" width="30" height="30">
+      <span>Wedding Invitation Studio</span>
+    </a>
+    <nav class="app-nav" aria-label="Main">
+      <a href="#/templates" data-route="templates">Templates</a>
+      <a href="#/editor" data-route="editor">Editor</a>
+    </nav>
+    <div class="header-tools" data-editor-only>
+      <p class="save-status" id="save-status" role="status" aria-live="polite"></p>
+      <button type="button" class="btn btn-icon" id="undo" aria-label="Undo" title="Undo (Ctrl+Z)" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+      </button>
+      <button type="button" class="btn btn-icon" id="redo" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5l-5-5M20 9H9a5 5 0 0 0 0 10h3"/></svg>
+      </button>
+      <button type="button" class="btn btn-primary" id="open-export">Download<span class="hide-sm">&nbsp;website</span></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Template gallery -->
+    <section id="view-templates" class="view view-templates" aria-labelledby="gallery-title" hidden>
+      <div class="hero">
+        <p class="eyebrow">No account · No backend · Your files stay in your browser</p>
+        <h1 id="gallery-title">Create a beautiful wedding invitation website</h1>
+        <p class="lead">Pick a template, personalise the names, dates, venues, colours, photos and music, then download a complete website you can host for free on Vercel, Netlify or any static host.</p>
+      </div>
+      <div class="template-grid" id="template-grid"></div>
+      <ol class="steps">
+        <li><strong>Choose</strong> a template and preview it.</li>
+        <li><strong>Personalise</strong> it — the preview updates as you type.</li>
+        <li><strong>Download</strong> a ZIP and upload the folder to a static host.</li>
+      </ol>
+    </section>
+
+    <!-- Editor -->
+    <section id="view-editor" class="view view-editor" aria-label="Invitation editor" hidden>
+      <div class="mobile-tabs" role="tablist" aria-label="Editor panels">
+        <button type="button" role="tab" id="tab-edit" aria-controls="editor-panel" aria-selected="true">Edit</button>
+        <button type="button" role="tab" id="tab-preview" aria-controls="preview-panel" aria-selected="false">Preview</button>
+      </div>
+      <div class="editor-layout">
+        <aside class="editor-panel" id="editor-panel" aria-label="Invitation settings">
+          <div id="notices"></div>
+          <form id="editor-form" class="editor-form" novalidate autocomplete="off"></form>
+          <section class="backup-panel" aria-labelledby="backup-title">
+            <h2 id="backup-title">Backup & restore</h2>
+            <p class="hint">Your text and settings are saved in this browser automatically. Uploaded photos and music are only kept while this tab is open — save a project backup to keep everything.</p>
+            <div class="button-row">
+              <button type="button" class="btn btn-secondary" id="save-project">Save project backup (.json)</button>
+              <label class="btn btn-secondary" for="import-project">Import backup…</label>
+              <input type="file" id="import-project" accept=".json,application/json" class="visually-hidden">
+            </div>
+            <div class="button-row">
+              <button type="button" class="btn btn-ghost" id="reset-sample">Reset to sample content</button>
+              <button type="button" class="btn btn-ghost" id="clear-draft">Clear saved draft</button>
+            </div>
+          </section>
+        </aside>
+        <section class="preview-panel" id="preview-panel" aria-label="Live preview">
+          <div class="preview-toolbar">
+            <div class="segmented" role="group" aria-label="Preview size">
+              <button type="button" data-viewport="desktop" aria-pressed="false">Desktop</button>
+              <button type="button" data-viewport="mobile" aria-pressed="true">Mobile</button>
+            </div>
+            <button type="button" class="btn btn-ghost btn-small" id="restart-preview">Restart preview</button>
+            <button type="button" class="btn btn-ghost btn-small" id="open-tab">Open in new tab</button>
+          </div>
+          <div class="preview-stage" id="preview-stage" data-viewport="mobile">
+            <div class="device" id="preview-device">
+              <div class="preview-host" id="preview-host"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- Template preview dialog -->
+  <dialog class="dialog dialog-wide" id="template-dialog" aria-labelledby="template-dialog-title">
+    <div class="dialog-head">
+      <h2 id="template-dialog-title">Template preview</h2>
+      <button type="button" class="btn btn-icon" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="dialog-preview" id="template-dialog-host"></div>
+    <div class="dialog-foot">
+      <button type="button" class="btn btn-ghost" data-close>Close</button>
+      <button type="button" class="btn btn-primary" id="template-dialog-use">Use this template</button>
+    </div>
+  </dialog>
+
+  <!-- Export dialog -->
+  <dialog class="dialog" id="export-dialog" aria-labelledby="export-title">
+    <div class="dialog-head">
+      <h2 id="export-title">Download your invitation website</h2>
+      <button type="button" class="btn btn-icon" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="dialog-body">
+      <fieldset class="export-options">
+        <legend class="visually-hidden">Export format</legend>
+        <label class="export-option">
+          <input type="radio" name="export-format" value="zip" checked>
+          <span class="export-option-title">Complete website (ZIP) <em class="badge">Recommended</em></span>
+          <span class="hint">index.html with separate CSS, JavaScript, fonts, images and music, plus hosting instructions. Upload the extracted folder to Vercel, Netlify or any static host.</span>
+        </label>
+        <label class="export-option">
+          <input type="radio" name="export-format" value="single">
+          <span class="export-option-title">Single HTML file</span>
+          <span class="hint">Everything embedded in one file. Handy for quick sharing, but photos and music make it large.</span>
+        </label>
+      </fieldset>
+      <div id="export-messages" aria-live="polite"></div>
+    </div>
+    <div class="dialog-foot">
+      <button type="button" class="btn btn-ghost" data-close>Cancel</button>
+      <button type="button" class="btn btn-primary" id="do-export">Download</button>
+    </div>
+  </dialog>
+
+  <!-- Confirmation dialog -->
+  <dialog class="dialog dialog-small" id="confirm-dialog" aria-labelledby="confirm-title">
+    <div class="dialog-body">
+      <h2 id="confirm-title"></h2>
+      <p id="confirm-text"></p>
+    </div>
+    <div class="dialog-foot">
+      <button type="button" class="btn btn-ghost" value="cancel" data-close>Cancel</button>
+      <button type="button" class="btn btn-danger" id="confirm-ok">Continue</button>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <noscript><p class="noscript">Wedding Invitation Studio needs JavaScript to run.</p></noscript>
+</body>
+</html>
