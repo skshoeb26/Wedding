@@ -174,7 +174,7 @@ export function createDefaultConfig(templateId = 'floral-book') {
     assets: {
       background: null,
       couplePhoto: null,
-      music: libraryMusicRef('ajam-joy')
+      music: libraryMusicRef('daf-zaffa')
     },
     meta: {
       title: '',
@@ -224,7 +224,12 @@ function mergeShape(defaults, input) {
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 // Tones that were replaced by happier ones keep working in saved drafts.
-const RENAMED_TONES = { 'hijaz-dawn': 'ajam-joy', 'bayati-serenity': 'sweet-nikah', 'kurd-blessing': 'sweet-nikah', 'nahawand-evening': 'wedding-zaffa' };
+// Earlier tones used melodic instruments and were removed; saved drafts that
+// chose one fall back to a daf rhythm.
+const RENAMED_TONES = Object.fromEntries(
+  ['hijaz-dawn', 'bayati-serenity', 'kurd-blessing', 'nahawand-evening', 'ajam-joy', 'wedding-zaffa', 'sweet-nikah', 'garden-dabke', 'rast-celebration']
+    .map((id) => [id, id === 'bayati-serenity' || id === 'sweet-nikah' ? 'daf-gentle' : 'daf-zaffa'])
+);
 
 // A built-in tone from the music library, referenced by id.
 export function libraryMusicRef(trackId) {

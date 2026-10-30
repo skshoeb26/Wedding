@@ -20,18 +20,18 @@ test('every library tone exists, is a small valid MP3', async () => {
 });
 
 test('library references are validated', () => {
-  const c = normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'rast-celebration', src: 'javascript:1' } } });
-  assert.deepEqual(c.assets.music, libraryMusicRef('rast-celebration'));
+  const c = normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'daf-festive', src: 'javascript:1' } } });
+  assert.deepEqual(c.assets.music, libraryMusicRef('daf-festive'));
   assert.equal(normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'not-a-track' } } }).assets.music, null);
-  assert.equal(createDefaultConfig().assets.music.library, 'ajam-joy', 'a happy tone is preselected');
-  assert.equal(normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'bayati-serenity' } } }).assets.music.library, 'sweet-nikah', 'replaced tones map to their successors');
+  assert.equal(createDefaultConfig().assets.music.library, 'daf-zaffa', 'a daf rhythm is preselected');
+  assert.equal(normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'ajam-joy' } } }).assets.music.library, 'daf-zaffa', 'removed instrumental tones fall back to daf');
 });
 
 test('a chosen tone is packaged in the ZIP and embedded in the single file', () => {
   const config = normalizeConfig(createDefaultConfig());
-  config.assets.music = libraryMusicRef('daf-zaffa');
+  config.assets.music = libraryMusicRef('daf-gentle');
   const zip = buildSite({ config, sources, mode: 'zip', art: InviteArt });
-  assert.ok(zip.files.some((f) => f.path === 'assets/audio/daf-zaffa.mp3'));
+  assert.ok(zip.files.some((f) => f.path === 'assets/audio/daf-gentle.mp3'));
   assert.deepEqual(zip.warnings, []);
   assert.deepEqual(verifyZipFiles(zip.files).missing, []);
   assert.match(zip.files.find((f) => f.path === 'README.md').data, /original composition/);
@@ -51,6 +51,10 @@ test('backups reference tones instead of embedding them', () => {
   const file = createProjectFile(config, new Map([[config.assets.music.id, { bytes: new Uint8Array(10), mime: 'audio/mpeg' }]]));
   assert.deepEqual(JSON.parse(file).assets, {});
   const parsed = parseProjectFile(file);
-  assert.equal(parsed.config.assets.music.library, 'ajam-joy');
+  assert.equal(parsed.config.assets.music.library, 'daf-zaffa');
   assert.deepEqual(parsed.warnings, []);
+});
+
+test('the library has no melodic-instrument tracks', () => {
+  for (const t of MUSIC_LIBRARY) assert.ok(['daf', 'vocal'].includes(t.kind), `${t.id} is ${t.kind}`);
 });

@@ -141,7 +141,7 @@ export const FORM = [
     id: 'music',
     title: 'Music',
     fields: [
-      { type: 'music-library', label: 'Choose a tone', hint: 'Original Arabic-style tones (about 40 seconds, looping), free to use. Press ▶ to listen.' },
+      { type: 'music-library', label: 'Choose background audio', hint: 'Daf rhythms only — no melodic instruments (about 40 seconds, looping, free to use). Press ▶ to listen.' },
       { type: 'asset', slot: 'music', label: 'Or upload your own (MP3, M4A, OGG, WAV)', accept: 'audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/webm,audio/flac,.mp3,.m4a,.ogg,.wav,.flac', hint: 'For example a nasheed or Qur’an recitation you have permission to share. Browsers block automatic playback, so music starts when the guest taps to open (or presses the music button).' },
       { type: 'text', path: 'invitation.music.title', label: 'Track title (optional)', maxLength: 120 },
       { type: 'toggle', path: 'invitation.music.startOnOpen', label: 'Start music when the invitation is opened' },

@@ -1,13 +1,11 @@
-# Built-in background tones
+# Built-in background audio
 
-Six short, looping, upbeat instrumentals (about 40 seconds each, 64 kbps mono
-MP3, around 300–385 KB). They are original compositions in the bright Arabic
-maqam scales Ajam and Rast, with daf rhythms and claps, plus a percussion-only
-track and a gentle drum-free music-box tune.
-They were synthesised from code by `tools/generate-tones.mjs`; no samples or
-recordings by others are used.
+The library contains **no melodic instruments**.
 
-They are free to use, share and modify with any invitation made with this
-generator (CC0 1.0 / public domain dedication).
+- **Daf rhythms** (`daf-zaffa`, `daf-gentle`, `daf-festive`): short, looping
+  frame-drum and hand-clap patterns, about 40 seconds each (64 kbps mono MP3,
+  around 320–340 KB). They are original and were synthesised from code by
+  `tools/generate-tones.mjs`; no samples or recordings by others are used.
+  They are free to use, share and modify (CC0 1.0).
 
-Regenerate them with `node tools/generate-tones.mjs` (requires ffmpeg).
+Regenerate the daf rhythms with `node tools/generate-tones.mjs` (requires ffmpeg).

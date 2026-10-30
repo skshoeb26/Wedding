@@ -47,10 +47,9 @@ account and no build step, and the exported site never contacts the generator.
   venues, addresses and Google Maps links, countdown with time zone, photos,
   background artwork, colours (with presets), fonts, text size, music, optional
   sections, RSVP contacts, WhatsApp and form links, labels and language.
-- **Built-in music**: six original, royalty-free, upbeat Arabic-style tones of
-  about 40 seconds each (Joyful Ajam, Wedding Zaffa, Sweet Nikah, Garden
-  Dabke, Rast Celebration, and Daf & Claps, which is percussion only), with a
-  ▶ preview in the editor. Families can also upload their own nasheed or
+- **Built-in background audio, no melodic instruments**: three original daf
+  rhythms of about 40 seconds each (Daf & Claps, Gentle Daf, Festive Daf),
+  with a ▶ preview in the editor. Families can also upload their own nasheed or
   recitation. Only the chosen tone is included in the export.
 - **Exports**
   - **ZIP website (recommended)**: `index.html`, `assets/css/style.css`,

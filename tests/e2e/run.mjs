@@ -144,10 +144,10 @@ await frame().locator('.fb-cover-names').waitFor({ timeout: 5000 });
 
 // ------------------------------------------------------------- built-in tones
 const tones = page.locator('.tone-option');
-check('tone picker lists no-music, six tones and own upload', (await tones.count()) === 8);
-check('a happy tone is preselected', await page.locator('.tone-option.is-selected').filter({ hasText: 'Joyful Ajam' }).count() === 1);
+check('tone picker lists no-music, the daf rhythms and own upload', (await tones.count()) === 5);
+check('a daf rhythm is preselected', await page.locator('.tone-option.is-selected').filter({ hasText: 'Daf & Claps' }).count() === 1);
 check('preselected tone gives the preview a music button', await waitPreview(() => !!document.querySelector('.wis-music'), null, 6000));
-const rastPlay = tones.filter({ hasText: 'Rast Celebration' }).locator('.tone-play');
+const rastPlay = tones.filter({ hasText: 'Festive Daf' }).locator('.tone-play');
 await rastPlay.click();
 check('tone preview plays in the editor', await rastPlay.evaluate((b) => b.classList.contains('is-playing')).catch(() => false)
   || await page.waitForFunction(() => !!document.querySelector('.tone-play.is-playing'), null, { timeout: 3000 }).then(() => true, () => false));
