@@ -39,6 +39,21 @@
     instance = template.create(mount, config, { core: core, music: music, state: state, preview: !!root.__WIS_PREVIEW__ });
   }
 
+  // In-page links ("#details") scroll here instead of navigating. Inside the
+  // editor preview (an about:srcdoc frame) the browser would otherwise resolve
+  // "#details" against the editor's URL and load the editor into the frame.
+  document.addEventListener('click', function (event) {
+    var link = event.target && event.target.closest ? event.target.closest('a[href^="#"]') : null;
+    if (!link || event.defaultPrevented) return;
+    event.preventDefault();
+    var target = document.getElementById(link.getAttribute('href').slice(1));
+    if (!target) return;
+    var reduced = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+  });
+
   function readConfig() {
     var node = document.getElementById('invitation-config');
     if (!node) return null;
