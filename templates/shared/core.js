@@ -593,9 +593,12 @@
       el('span', { className: 'wis-curtain-tassel', 'aria-hidden': 'true' }),
       el('span', { className: 'wis-curtain-text', text: prompt }),
       el('span', { className: 'wis-curtain-chevron', 'aria-hidden': 'true' }));
-    var wrap = el('div', { className: 'wis-curtain' },
-      el('div', { className: 'wis-curtain-panel is-left', 'aria-hidden': 'true' }, el('img', { src: uri, alt: '' })),
-      el('div', { className: 'wis-curtain-panel is-right', 'aria-hidden': 'true' }, el('img', { src: uri, alt: '' })),
+    // The fabric repeats across at its natural size, so wide desktop screens
+    // show more folds instead of one hugely stretched panel.
+    var fabric = { '--wis-curtain-art': 'url("' + uri + '")' };
+    var wrap = el('div', { className: 'wis-curtain', style: fabric },
+      el('div', { className: 'wis-curtain-panel is-left', 'aria-hidden': 'true' }),
+      el('div', { className: 'wis-curtain-panel is-right', 'aria-hidden': 'true' }),
       btn);
     function open() {
       if (opened) return;

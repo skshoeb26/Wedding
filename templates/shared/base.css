@@ -123,10 +123,13 @@ body {
   transition: transform 1.7s cubic-bezier(.6, .05, .25, 1), filter 1.7s ease;
   will-change: transform;
 }
-.wis-curtain-panel img { width: 100%; height: 100%; object-fit: cover; object-position: right center; display: block; }
+.wis-curtain-panel::before {
+  content: ""; position: absolute; inset: 0;
+  background: var(--wis-curtain-art) right top / auto 100% repeat-x;
+}
 .wis-curtain-panel.is-left { left: 0; transform-origin: left top; box-shadow: 6px 0 18px rgba(60, 25, 25, .25); }
 .wis-curtain-panel.is-right { right: 0; transform-origin: right top; }
-.wis-curtain-panel.is-right img { transform: scaleX(-1); }
+.wis-curtain-panel.is-right::before { transform: scaleX(-1); }
 .wis-curtain.is-open .wis-curtain-panel.is-left { transform: translateX(-102%) skewY(-2deg) scaleX(.6); }
 .wis-curtain.is-open .wis-curtain-panel.is-right { transform: translateX(102%) skewY(2deg) scaleX(.6); }
 .wis-curtain-pull {
@@ -147,7 +150,13 @@ body {
   width: 14px; height: 28px; border-radius: 7px 7px 3px 3px;
   background: repeating-linear-gradient(90deg, var(--wis-accent) 0 2px, color-mix(in srgb, var(--wis-accent) 60%, #fff) 2px 4px);
 }
-.wis-curtain-text { margin-top: 26px; white-space: nowrap; }
+.wis-curtain-text {
+  margin-top: 26px; white-space: nowrap;
+  padding: 8px 18px; border-radius: 999px;
+  background: color-mix(in srgb, var(--wis-primary) 55%, transparent);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  text-shadow: none;
+}
 .wis-curtain-chevron { width: 10px; height: 10px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); animation: wis-bob 1.8s ease-in-out infinite; }
 .wis-curtain.is-open .wis-curtain-pull { opacity: 0; }
 @keyframes wis-sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
