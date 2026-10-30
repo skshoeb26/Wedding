@@ -174,7 +174,7 @@ export function createDefaultConfig(templateId = 'floral-book') {
     assets: {
       background: null,
       couplePhoto: null,
-      music: libraryMusicRef('daf-zaffa')
+      music: libraryMusicRef('nasheed-barakallah')
     },
     meta: {
       title: '',

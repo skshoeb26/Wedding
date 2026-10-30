@@ -4,6 +4,13 @@
 
 export const MUSIC_LIBRARY = [
   {
+    id: 'nasheed-barakallah',
+    title: 'Bārakallāhu Lakumā',
+    description: 'The Prophet’s ﷺ wedding du’a, sung by a warm male voice with soft harmonies and a light daf.',
+    instruments: 'Vocals · Daf',
+    kind: 'vocal'
+  },
+  {
     id: 'daf-zaffa',
     title: 'Daf & Claps',
     description: 'Upbeat zaffa rhythm on the daf with hand claps.',

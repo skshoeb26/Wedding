@@ -23,7 +23,7 @@ test('library references are validated', () => {
   const c = normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'daf-festive', src: 'javascript:1' } } });
   assert.deepEqual(c.assets.music, libraryMusicRef('daf-festive'));
   assert.equal(normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'not-a-track' } } }).assets.music, null);
-  assert.equal(createDefaultConfig().assets.music.library, 'daf-zaffa', 'a daf rhythm is preselected');
+  assert.equal(createDefaultConfig().assets.music.library, 'nasheed-barakallah', 'the vocal du’a nasheed is preselected');
   assert.equal(normalizeConfig({ ...createDefaultConfig(), assets: { music: { id: 'x', library: 'ajam-joy' } } }).assets.music.library, 'daf-zaffa', 'removed instrumental tones fall back to daf');
 });
 
@@ -51,7 +51,7 @@ test('backups reference tones instead of embedding them', () => {
   const file = createProjectFile(config, new Map([[config.assets.music.id, { bytes: new Uint8Array(10), mime: 'audio/mpeg' }]]));
   assert.deepEqual(JSON.parse(file).assets, {});
   const parsed = parseProjectFile(file);
-  assert.equal(parsed.config.assets.music.library, 'daf-zaffa');
+  assert.equal(parsed.config.assets.music.library, 'nasheed-barakallah');
   assert.deepEqual(parsed.warnings, []);
 });
 
