@@ -23,7 +23,7 @@ test('normalizeConfig drops unknown keys and repairs invalid values', () => {
   assert.equal(c.invitation.couple.partner1.name, 'Ayesha');
   assert.equal(c.invitation.events.length, 8);
   assert.deepEqual(c.invitation.labels, { days: 'Tage' });
-  assert.equal(c.theme.colors.primary, '#9c5b63');
+  assert.equal(c.theme.colors.primary, '#a4605b');
   assert.equal(c.theme.fonts.script, 'Great Vibes');
   assert.equal(c.theme.textScale, 1.3);
   assert.equal(c.animation.pageTurn, 'flip');
@@ -72,4 +72,16 @@ test('drafts survive a broken storage backend', () => {
   const broken = { setItem() { throw new Error('quota'); }, getItem() { throw new Error('denied'); } };
   assert.equal(s.saveDraft(broken), false);
   assert.equal(Store.loadDraft(broken), null);
+});
+
+test('older drafts gain new fields with defaults', () => {
+  const old = createDefaultConfig();
+  delete old.invitation.blessings;
+  delete old.animation.intro;
+  delete old.sections.blessings;
+  const c = normalizeConfig(old);
+  assert.equal(c.animation.intro, 'curtain');
+  assert.equal(c.sections.blessings, true);
+  assert.match(c.invitation.blessings.heading, /blessings/);
+  assert.equal(normalizeConfig({ ...old, animation: { intro: 'fireworks' } }).animation.intro, 'curtain');
 });

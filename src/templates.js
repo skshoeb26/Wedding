@@ -14,8 +14,8 @@ export const TEMPLATES = [
     name: 'Floral Book',
     tagline: 'Ornate book cover with page-turn animation',
     description:
-      'A dusty-rose and gold invitation book. Guests tap the floral cover to open it and turn through pages for the family introduction, events, countdown, RSVP and a closing note.',
-    features: ['Page-turn animation', 'Arabic calligraphy', 'Countdown', 'Music control'],
+      'A pearl curtain parts to reveal a dusty-rose and gold book. Guests scroll or swipe to turn its pages, from the blessings and invitation to each event, and finish on a back cover with a live countdown and venue links.',
+    features: ['Curtain reveal', 'Scroll page turns', 'Arabic calligraphy', 'Countdown', 'Music control'],
     runtime: 'templates/floral-book/runtime.js',
     css: 'templates/floral-book/template.css',
     thumbnailVariant: 'book',
@@ -31,6 +31,18 @@ export const TEMPLATES = [
     runtime: 'templates/garden-scroll/runtime.js',
     css: 'templates/garden-scroll/template.css',
     thumbnailVariant: 'scroll',
+    recommendedExport: 'zip'
+  },
+  {
+    id: 'sealed-envelope',
+    name: 'Sealed Envelope',
+    tagline: 'Tap the wax seal to open the letter',
+    description:
+      'A paper envelope closed with a monogrammed wax seal. The flap lifts, the letter slides out, and the details unfold as elegant cards below.',
+    features: ['Envelope opening', 'Wax seal monogram', 'Countdown', 'Music control'],
+    runtime: 'templates/sealed-envelope/runtime.js',
+    css: 'templates/sealed-envelope/template.css',
+    thumbnailVariant: 'envelope',
     recommendedExport: 'zip'
   }
 ];

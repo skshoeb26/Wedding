@@ -69,3 +69,9 @@ test('content model applies fallbacks and section toggles', () => {
   assert.equal(m.countdown, null);
   assert.equal(m.labels.days, 'Days');
 });
+
+test('blessing names are split into lines', () => {
+  const m = C.content({ invitation: { blessings: { intro: 'x', heading: 'With', names: ' A & B \n\n C & D \r\n' } }, assets: {} });
+  assert.deepEqual(m.blessings.names, ['A & B', 'C & D']);
+  assert.equal(C.content({ invitation: {}, sections: { blessings: false }, assets: {} }).blessings, null);
+});

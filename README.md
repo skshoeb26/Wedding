@@ -9,15 +9,23 @@ account and no build step, and the exported site never contacts the generator.
 
 ![Floral Book on mobile](docs/screenshots/floral-book-mobile.png)
 
+![Sealed Envelope](docs/screenshots/sealed-envelope.png)
+
 ![Editor with live preview](docs/screenshots/editor.png)
 
 ## Features
 
-- **Template gallery** with previews. Two templates are included:
-  - **Floral Book** (main template): an ornate dusty-rose and gold book cover
-    with original floral artwork, Arabic calligraphy, a tap-to-open
-    interaction, 3D page turns (a two-page spread on desktop), countdown,
-    music control, RSVP and a closing page.
+- **Template gallery** with previews. Three templates are included:
+  - **Floral Book** (main template, modelled on the reference recording):
+    a pearl-draped curtain (“Pull the strings to open”) reveals a dusty-rose
+    book with a baroque gold oval medallion, Arabic calligraphy and lace
+    florals. Guests turn the 3D pages by scrolling, swiping, tapping or with
+    the keyboard: monogram page → blessings → invitation → one page per event
+    → photo → RSVP → “Awaiting your presence”. The back cover holds the live
+    countdown, venue map links and “Open again”. Desktop shows a two-page
+    spread.
+  - **Sealed Envelope**: tap the monogrammed wax seal, the flap lifts and the
+    letter slides out, then the details unfold as cards.
   - **Garden Scroll**: a single scrolling page with reveal animations.
 - **Live editor**: two panels on desktop and Edit/Preview tabs on mobile. The
   preview updates as you type and can be shown at desktop or phone size.
@@ -83,8 +91,8 @@ The `README.md` inside every export repeats these steps.
 
 ```bash
 npm run check      # syntax check of every JS file and JSON validation
-npm test           # 27 unit tests: core runtime, schema, store, uploads, export engine
-npm run test:e2e   # 94 browser checks with Playwright + Chromium
+npm test           # 29 unit tests: core runtime, schema, store, uploads, export engine
+npm run test:e2e   # 122 browser checks with Playwright + Chromium
 ```
 
 The end-to-end test drives the real editor. It edits every text field and
@@ -96,7 +104,9 @@ import. It downloads both exports, extracts the ZIP and opens the result in
 site**: on a mobile and a desktop viewport, from `file://`, offline as a
 single file, and with reduced motion. In those contexts it opens the cover,
 turns through every page with buttons, the keyboard and swipes, and checks
-fonts, layout overflow, music start and pause, and errors. Screenshots are
+fonts, layout overflow, music start and pause, and errors. The same clean,
+request-blocking setup also covers the curtain reveal, scroll-wheel page turns
+and the back cover, plus the Sealed Envelope and Garden Scroll exports. Screenshots are
 written to `test-results/`.
 
 ## Project structure
@@ -120,6 +130,7 @@ templates/                 everything that ships inside an exported site
   shared/boot.js           reads the inline JSON configuration and renders
   shared/base.css
   floral-book/             runtime.js + template.css
+  sealed-envelope/         runtime.js + template.css
   garden-scroll/           runtime.js + template.css
 vendor/                    JSZip (MIT) and OFL fonts with their licences
 tools/                     static server and syntax checker

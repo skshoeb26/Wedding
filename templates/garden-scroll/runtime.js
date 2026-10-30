@@ -132,6 +132,14 @@
       cue.addEventListener('click', startOnScroll);
     }
 
+    if (core.get(config, 'animation.intro', 'curtain') === 'curtain' && !(ctx.state && ctx.state.curtainOpen)) {
+      var curtain = core.curtain(config, function () {
+        if (C.musicSrc && C.musicOnOpen && !ctx.music.isPlaying()) ctx.music.play();
+      });
+      rootEl.appendChild(curtain.el);
+      rootEl.curtain = curtain;
+    }
+
     mount.appendChild(rootEl);
 
     if (!reduced && 'IntersectionObserver' in root) {
@@ -153,7 +161,7 @@
 
     return {
       goTo: function (i) { root.scrollTo({ top: i ? body.offsetTop : 0, behavior: reduced ? 'auto' : 'smooth' }); },
-      getState: function () { return { scroll: root.scrollY }; },
+      getState: function () { return { scroll: root.scrollY, curtainOpen: !rootEl.curtain || rootEl.curtain.isOpen() }; },
       destroy: function () {
         cleanups.forEach(function (fn) { if (fn) fn(); });
         cleanups = [];

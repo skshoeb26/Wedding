@@ -1,5 +1,7 @@
 /*
- * Template: Floral Book — an ornate invitation book with page-turn animation.
+ * Template: Floral Book — a pearl-curtain reveal, then an ornate invitation
+ * book whose pages turn on scroll, swipe, tap or keyboard. The last leaf is
+ * the back cover with the countdown and venue links.
  */
 (function (root) {
   'use strict';
@@ -14,142 +16,149 @@
     var reduced = core.reducedMotion(config);
     var turn = reduced ? 'fade' : core.get(config, 'animation.pageTurn', 'flip');
     if (['flip', 'fade', 'slide'].indexOf(turn) === -1) turn = 'flip';
+    var turnMs = Math.min(2500, Math.max(200, Number(core.get(config, 'animation.pageTurnMs', 1000)) || 1000));
     var cleanups = [];
 
     var cornerUri = art.dataUri(art.corner(colors));
     var dividerUri = art.dataUri(art.divider(colors));
-    var medallionUri = art.dataUri(art.medallion(colors));
+    var frameUri = art.dataUri(art.pageFrame(colors));
+    var ribbonUri = art.dataUri(art.ribbon(colors));
+    var names = C.names.one + ' ' + C.names.joiner + ' ' + C.names.two;
 
     var rootEl = el('div', { className: 'wis-root fb', 'data-turn': turn });
     core.applyTheme(rootEl, config);
     rootEl.style.setProperty('--fb-damask', 'url("' + art.dataUri(art.damask(colors)) + '")');
+    rootEl.style.setProperty('--fb-paper-art', 'url("' + art.dataUri(art.paperFloral(colors)) + '")');
     if (reduced) rootEl.classList.add('is-reduced');
 
-    // Background artwork (uploaded image or the generated floral default).
-    var bgSrc = C.background || art.dataUri(art.background(colors));
     rootEl.appendChild(el('div', { className: 'fb-bg', 'aria-hidden': 'true' },
-      el('img', { className: 'fb-bg-img', src: bgSrc, alt: '', decoding: 'async' }),
+      el('img', { className: 'fb-bg-img', src: C.background || art.dataUri(art.background(colors)), alt: '', decoding: 'async' }),
       el('div', { className: 'fb-bg-tint' })));
 
     if (core.get(config, 'animation.petals', true) && !reduced) rootEl.appendChild(petals());
 
-    function divider() {
-      return el('img', { className: 'fb-divider', src: dividerUri, alt: '', 'aria-hidden': 'true' });
+    // ---- helpers -----------------------------------------------------------
+    function img(cls, src) {
+      return el('img', { className: cls, src: src, alt: '', 'aria-hidden': 'true' });
     }
 
-    function corners(all) {
-      var list = all ? ['tl', 'tr', 'bl', 'br'] : ['tl', 'br'];
-      return list.map(function (pos) {
-        return el('img', { className: 'fb-corner fb-corner--' + pos, src: cornerUri, alt: '', 'aria-hidden': 'true' });
-      });
+    function divider() {
+      return img('fb-divider', dividerUri);
+    }
+
+    function lengthClass(text, long, xlong) {
+      var len = Array.from(text || '').length;
+      return len > xlong ? 'xlong' : len > long ? 'long' : null;
     }
 
     function script(text, cls) {
-      var len = Array.from(text || '').length;
-      return el('p', {
-        className: 'fb-script' + (cls ? ' ' + cls : ''), text: text, dir: 'auto',
-        'data-len': len > 22 ? 'xlong' : len > 13 ? 'long' : null
-      });
+      return el('p', { className: 'fb-script' + (cls ? ' ' + cls : ''), text: text, dir: 'auto', 'data-len': lengthClass(text, 11, 18) });
     }
 
-    // ---- Page definitions -------------------------------------------------
+    function small(text, cls) {
+      return core.textBlock('p', text, 'fb-small' + (cls ? ' ' + cls : ''));
+    }
+
+    // ---- page definitions ----------------------------------------------------
     var pages = [];
 
-    var coverLen = Math.max(Array.from(C.names.one).length, Array.from(C.names.two).length);
-    pages.push({ id: 'cover', label: C.names.one + ' ' + C.names.joiner + ' ' + C.names.two, cover: true, body: function () {
+    pages.push({ id: 'cover', kind: 'cover', label: names, body: function () {
       var mono = C.names.arabic1 && C.names.arabic2
-        ? el('p', { className: 'fb-medallion-text wis-arabic fb-calligraphy', lang: 'ar', dir: 'rtl', text: C.names.arabic1 + ' و ' + C.names.arabic2 })
-        : el('p', { className: 'fb-medallion-text fb-script', text: C.names.initials });
-      var openBtn = el('button', {
-        type: 'button', className: 'fb-open', onclick: function (e) { e.stopPropagation(); open(); }
-      }, el('span', { className: 'fb-seal', 'aria-hidden': 'true' }, C.names.one.charAt(0)), el('span', { text: C.openPrompt || L.open }));
+        ? el('p', {
+          className: 'fb-oval-text wis-arabic fb-calligraphy', lang: 'ar', dir: 'rtl', text: C.names.arabic1 + ' و ' + C.names.arabic2,
+          'data-len': lengthClass(C.names.arabic1 + C.names.arabic2, 11, 18)
+        })
+        : el('p', { className: 'fb-oval-text fb-script', text: C.names.initials });
+      var coverLen = Math.max(Array.from(C.names.one).length, Array.from(C.names.two).length);
       return [
-        el('div', { className: 'fb-cover-frame', 'aria-hidden': 'true' }),
-        corners(true),
-        el('div', { className: 'fb-cover-content' },
-          core.textBlock('p', C.coverTagline, 'fb-eyebrow'),
-          el('div', { className: 'fb-medallion' },
-            el('img', { src: medallionUri, alt: '', 'aria-hidden': 'true' }), mono),
-          el('h1', { className: 'fb-cover-names', 'data-len': coverLen > 22 ? 'xlong' : coverLen > 12 ? 'long' : null },
-            el('span', { text: C.names.one, dir: 'auto' }),
-            el('span', { className: 'fb-amp', text: C.names.joiner }),
-            el('span', { text: C.names.two, dir: 'auto' })),
-          core.textBlock('p', C.coverDate, 'fb-cover-date'),
-          openBtn)
+        small(C.coverTagline, 'fb-cover-tagline'),
+        el('div', { className: 'fb-oval' }, img('fb-oval-frame', art.dataUri(art.ovalFrame(colors))), mono),
+        el('h1', { className: 'fb-cover-names', 'data-len': coverLen > 18 ? 'xlong' : coverLen > 11 ? 'long' : null },
+          el('span', { text: C.names.one, dir: 'auto' }),
+          el('span', { className: 'fb-amp', text: C.names.joiner }),
+          el('span', { text: C.names.two, dir: 'auto' })),
+        small(C.coverDate, 'fb-cover-date')
       ];
     } });
 
-    pages.push({ id: 'welcome', label: C.heading || 'Invitation', body: function () {
-      var n = C.names;
+    pages.push({ id: 'monogram', label: C.bismillah ? 'Bismillah' : names, body: function () {
+      var arabicNames = C.names.arabic1 && C.names.arabic2;
       return [
         core.arabic(C.bismillah, 'fb-bismillah fb-calligraphy'),
-        core.textBlock('p', C.heading, 'fb-eyebrow'),
-        C.family ? core.textBlock('p', C.family.intro, 'fb-lead') : null,
-        divider(),
-        el('div', { className: 'fb-couple' },
-          el('div', { className: 'fb-person' },
-            script(n.one, 'fb-name'), core.textBlock('p', n.full1, 'fb-fullname'), C.family ? core.textBlock('p', n.parents1, 'fb-parents') : null),
-          el('p', { className: 'fb-amp fb-script', text: n.joiner, 'aria-hidden': 'true' }),
-          el('div', { className: 'fb-person' },
-            script(n.two, 'fb-name'), core.textBlock('p', n.full2, 'fb-fullname'), C.family ? core.textBlock('p', n.parents2, 'fb-parents') : null))
+        arabicNames
+          ? el('p', { className: 'wis-arabic fb-calligraphy fb-arabic-names', lang: 'ar', dir: 'rtl', text: C.names.arabic1 + ' و ' + C.names.arabic2 })
+          : null,
+        arabicNames ? divider() : null,
+        script(names, arabicNames ? 'fb-mono-latin' : 'fb-name')
       ];
     } });
 
-    if (C.quote || C.message) {
-      pages.push({ id: 'message', label: C.quote ? C.quote.reference || 'Quote' : 'Message', body: function () {
-        var q = C.quote;
+    if (C.blessings || C.quote) {
+      pages.push({ id: 'blessings', label: (C.blessings && C.blessings.heading) || 'Blessings', body: function () {
+        var b = C.blessings, q = C.quote;
         return [
-          q ? core.arabic(q.arabic, 'fb-quote-ar') : null,
+          b ? small(b.intro, 'fb-blessing-intro') : null,
+          q ? core.arabic(q.arabic, 'fb-quote-ar fb-calligraphy') : null,
           q ? core.textBlock('p', q.translation, 'fb-quote') : null,
-          q ? core.textBlock('p', q.reference, 'fb-eyebrow') : null,
-          q && C.message ? divider() : null,
-          core.textBlock('p', C.message, 'fb-lead')
+          q ? small(q.reference, 'fb-muted') : null,
+          b && b.names.length ? divider() : null,
+          b && b.names.length ? small(b.heading, 'fb-label') : null,
+          b && b.names.length ? el('ul', { className: 'fb-blessing-names' }, b.names.map(function (line) {
+            return el('li', { text: line, dir: 'auto' });
+          })) : null
         ];
       } });
     }
 
+    pages.push({ id: 'invite', label: C.heading || 'Invitation', ribbon: true, body: function () {
+      var n = C.names;
+      return [
+        small(C.heading, 'fb-invite-heading'),
+        C.family ? core.textBlock('p', C.family.intro, 'fb-lead') : null,
+        el('div', { className: 'fb-couple' },
+          script(n.one, 'fb-name'),
+          small(n.full1, 'fb-fullname'),
+          C.family ? small(n.parents1, 'fb-parents') : null,
+          el('p', { className: 'fb-script fb-joiner', text: n.joiner, dir: 'auto' }),
+          script(n.two, 'fb-name'),
+          small(n.full2, 'fb-fullname'),
+          C.family ? small(n.parents2, 'fb-parents') : null)
+      ];
+    } });
+
+    if (C.message) {
+      pages.push({ id: 'message', label: 'Message', body: function () {
+        return [divider(), core.textBlock('p', C.message, 'fb-lead'), divider()];
+      } });
+    }
+
     C.events.forEach(function (ev, i) {
-      pages.push({ id: 'event-' + i, label: ev.label || 'Event', body: function () {
+      pages.push({ id: 'event-' + i, label: ev.label || 'Event', ribbon: i === 0, body: function () {
         var time = ev.timeText + (ev.endTimeText ? ' – ' + ev.endTimeText : '');
+        var parts = ev.parts;
         return [
-          script(ev.label, 'fb-event-title'),
-          divider(),
-          ev.parts ? el('div', { className: 'fb-date' },
-            el('span', { className: 'fb-date-side', text: ev.parts.weekday }),
-            el('span', { className: 'fb-date-day', text: ev.parts.day }),
-            el('span', { className: 'fb-date-side', text: ev.parts.month + ' ' + ev.parts.year })) : core.textBlock('p', ev.dateText, 'fb-lead'),
-          core.textBlock('p', time, 'fb-time'),
-          core.textBlock('p', ev.hijriText, 'fb-hijri'),
+          el('h2', { className: 'fb-display', text: ev.label, dir: 'auto', 'data-len': lengthClass(ev.label, 9, 14) }),
+          parts ? el('p', { className: 'fb-date' },
+            el('span', { className: 'fb-date-line', text: parts.weekday + ', ' + parts.day }),
+            el('span', { className: 'fb-date-line', text: parts.month + ' ' + parts.year })) : small(ev.dateText, 'fb-date'),
+          small(ev.hijriText, 'fb-hijri'),
+          small(ev.note, 'fb-note'),
+          small(time, 'fb-time'),
           ev.venueName || ev.address ? el('div', { className: 'fb-venue' },
-            core.textBlock('p', L.venue, 'fb-eyebrow'),
-            core.textBlock('p', ev.venueName, 'fb-venue-name'),
-            core.textBlock('p', ev.address, 'fb-address')) : null,
-          core.textBlock('p', ev.note, 'fb-note'),
+            small(L.venue, 'fb-label'),
+            small(ev.venueName, 'fb-venue-name'),
+            small(ev.address, 'fb-address')) : null,
           core.linkButton(ev.mapsHref, L.viewMap, 'map')
         ];
       } });
     });
 
-    if (C.countdown && isFinite(C.countdown.targetMs)) {
-      pages.push({ id: 'countdown', label: C.countdown.heading || 'Countdown', body: function () {
-        var w = core.countdownWidget(C.countdown, L);
-        cleanups.push(w.destroy);
-        return [
-          script(C.countdown.heading || 'Save the date', 'fb-event-title'),
-          divider(),
-          w,
-          C.events[0] ? core.textBlock('p', C.events[0].dateText, 'fb-time') : null,
-          el('p', { className: 'fb-names-small fb-script', text: C.names.one + ' ' + C.names.joiner + ' ' + C.names.two })
-        ];
-      } });
-    }
-
     if (C.photo) {
       pages.push({ id: 'photo', label: C.photo.heading || 'Photo', body: function () {
         return [
-          core.textBlock('p', C.photo.heading, 'fb-eyebrow'),
+          small(C.photo.heading, 'fb-label'),
           el('figure', { className: 'fb-photo' },
-            el('img', { src: C.photo.src, alt: C.photo.caption || (C.names.one + ' ' + C.names.joiner + ' ' + C.names.two), loading: 'lazy' }),
+            el('img', { src: C.photo.src, alt: C.photo.caption || names, loading: 'lazy' }),
             C.photo.caption ? el('figcaption', { text: C.photo.caption, dir: 'auto' }) : null)
         ];
       } });
@@ -159,10 +168,10 @@
       pages.push({ id: 'rsvp', label: C.rsvp.heading || 'RSVP', body: function () {
         var r = C.rsvp;
         return [
-          script(r.heading || 'RSVP', 'fb-event-title'),
+          el('h2', { className: 'fb-display fb-display-sm', text: r.heading || 'RSVP', dir: 'auto' }),
           divider(),
           core.textBlock('p', r.message, 'fb-lead'),
-          r.deadlineText ? el('p', { className: 'fb-time' }, L.rsvpBy + ' ', el('strong', { text: r.deadlineText })) : null,
+          r.deadlineText ? el('p', { className: 'fb-small' }, L.rsvpBy + ' ', el('strong', { text: r.deadlineText })) : null,
           r.contacts.length ? el('ul', { className: 'fb-contacts' }, r.contacts.map(function (c) {
             return el('li', null,
               el('span', { className: 'fb-contact-name', text: c.name, dir: 'auto' }),
@@ -178,62 +187,105 @@
     pages.push({ id: 'closing', label: C.closing.heading || 'Thank you', body: function () {
       var cl = C.closing;
       return [
-        script(cl.heading, 'fb-event-title'),
-        divider(),
+        small(cl.heading, 'fb-closing-heading'),
+        script(cl.signature || names, 'fb-closing-name'),
         core.textBlock('p', cl.message, 'fb-lead'),
-        el('p', { className: 'fb-names-small fb-script', text: C.names.one + ' ' + C.names.joiner + ' ' + C.names.two }),
-        core.textBlock('p', cl.signature, 'fb-parents'),
-        core.textBlock('p', cl.hashtag, 'fb-hashtag'),
-        el('button', { type: 'button', className: 'wis-btn fb-replay', onclick: function () { goTo(0); } },
-          core.icon('replay'), el('span', { text: L.readAgain }))
+        small(cl.hashtag, 'fb-hashtag')
       ];
     } });
 
-    // ---- Book --------------------------------------------------------------
+    pages.push({ id: 'back', kind: 'backcover', label: (C.countdown && C.countdown.heading) || L.readAgain, body: function () {
+      var parts = [];
+      if (C.countdown && isFinite(C.countdown.targetMs)) {
+        var w = core.countdownWidget(C.countdown, L);
+        cleanups.push(w.destroy);
+        parts.push(small(C.countdown.heading, 'fb-back-heading'), w);
+      }
+      var pills = C.events.filter(function (ev) { return ev.mapsHref; }).map(function (ev) {
+        return el('a', { className: 'fb-pill', href: ev.mapsHref, target: '_blank', rel: 'noopener noreferrer' },
+          core.icon('map'),
+          el('span', { className: 'fb-pill-text' },
+            el('span', { className: 'fb-pill-label', text: ev.label }),
+            el('span', { className: 'fb-pill-venue', text: ev.venueName || ev.address })));
+      });
+      if (pills.length) parts.push(el('div', { className: 'fb-pills' }, pills));
+      parts.push(el('button', { type: 'button', className: 'fb-again', onclick: function () { goTo(0); } },
+        core.icon('replay'), el('span', { text: L.readAgain })));
+      return parts;
+    } });
+
+    // ---- book --------------------------------------------------------------
     var total = pages.length;
     var book = el('div', { className: 'fb-book', role: 'region', 'aria-roledescription': 'book', 'aria-label': pages[0].label });
+
+    function decorations(pg) {
+      if (pg.kind) {
+        return [
+          img('fb-cover-frame', frameUri),
+          img('fb-corner fb-corner--tl', cornerUri),
+          img('fb-corner fb-corner--br', cornerUri)
+        ];
+      }
+      return [
+        img('fb-frame', frameUri),
+        img('fb-corner fb-corner--tl', cornerUri),
+        img('fb-corner fb-corner--br', cornerUri),
+        pg.ribbon ? img('fb-ribbon', ribbonUri) : null
+      ];
+    }
+
     var leaves = pages.map(function (pg, i) {
-      var inner = el('div', { className: pg.cover ? 'fb-cover-inner' : 'fb-page-inner' }, pg.body());
-      var front = el('div', { className: 'fb-face fb-front' + (pg.cover ? ' fb-cover-face' : ' fb-paper') },
-        pg.cover ? null : el('div', { className: 'fb-frame', 'aria-hidden': 'true' }),
-        pg.cover ? null : corners(false),
-        inner,
-        pg.cover ? null : el('span', { className: 'fb-folio', 'aria-hidden': 'true', text: String(i) }));
+      var inner = el('div', { className: pg.kind ? 'fb-cover-inner' : 'fb-page-inner' }, pg.body());
+      var front = el('div', { className: 'fb-face fb-front ' + (pg.kind ? 'fb-cover-face' : 'fb-paper') }, decorations(pg), inner);
       var back = el('div', { className: 'fb-face fb-back', 'aria-hidden': 'true' },
-        el('div', { className: 'fb-back-art' },
-          el('div', { className: 'fb-frame' }),
-          el('img', { className: 'fb-corner fb-corner--tr', src: cornerUri, alt: '' }),
-          el('img', { className: 'fb-corner fb-corner--bl', src: cornerUri, alt: '' }),
-          el('img', { className: 'fb-back-medallion', src: medallionUri, alt: '' })));
+        img('fb-frame', frameUri), img('fb-corner fb-corner--tr', cornerUri), img('fb-corner fb-corner--bl', cornerUri));
       var leaf = el('section', {
-        className: 'fb-leaf' + (pg.cover ? ' fb-cover' : ''),
+        className: 'fb-leaf' + (pg.kind ? ' fb-' + pg.kind : ''),
         'aria-label': L.page + ' ' + (i + 1) + ' ' + L.of + ' ' + total + ': ' + pg.label,
         'data-page': pg.id
       }, front, back);
-      if (pg.cover) leaf.addEventListener('click', function () { if (index === 0) open(); });
+      if (pg.kind === 'cover') leaf.addEventListener('click', function () { if (index === 0) open(); });
       book.appendChild(leaf);
       return leaf;
     });
 
+    var prompt = el('button', { type: 'button', className: 'fb-prompt', onclick: function () { open(); } },
+      el('span', { text: C.openPrompt || 'Scroll to open the book' }), el('span', { className: 'fb-chevron', 'aria-hidden': 'true' }));
     var prev = el('button', { type: 'button', className: 'fb-nav-btn', 'aria-label': L.previous, onclick: function () { goTo(index - 1); } }, core.icon('left'));
     var next = el('button', { type: 'button', className: 'fb-nav-btn', 'aria-label': L.next, onclick: function () { goTo(index + 1); } }, core.icon('right'));
     var dots = el('div', { className: 'fb-dots' }, pages.map(function (pg, i) {
-      return el('button', {
-        type: 'button', className: 'fb-dot', 'aria-label': L.page + ' ' + (i + 1) + ': ' + pg.label,
-        onclick: function () { goTo(i); }
-      });
+      return el('button', { type: 'button', className: 'fb-dot', 'aria-label': L.page + ' ' + (i + 1) + ': ' + pg.label, onclick: function () { goTo(i); } });
     }));
     var counter = el('span', { className: 'fb-counter', 'aria-hidden': 'true' });
     var nav = el('nav', { className: 'fb-nav', 'aria-label': 'Invitation pages' }, prev, el('div', { className: 'fb-nav-mid' }, dots, counter), next);
     var live = el('p', { className: 'wis-sr-only', 'aria-live': 'polite' });
-
-    var stage = el('main', { className: 'fb-stage' }, el('div', { className: 'fb-book-wrap' }, book), nav, live);
+    var stage = el('main', { className: 'fb-stage' }, el('div', { className: 'fb-book-wrap' }, book), el('div', { className: 'fb-controls' }, prompt, nav), live);
     rootEl.appendChild(stage);
 
     if (C.musicSrc) {
       var mb = core.musicButton(ctx.music, L);
       cleanups.push(mb.destroy);
       rootEl.appendChild(mb);
+    }
+
+    function startMusic() {
+      if (C.musicSrc && C.musicOnOpen && !ctx.music.isPlaying()) ctx.music.play();
+    }
+
+    // Curtain intro
+    var curtain = null;
+    var showCurtain = core.get(config, 'animation.intro', 'curtain') === 'curtain' && !(ctx.state && ctx.state.curtainOpen);
+    if (showCurtain) {
+      curtain = core.curtain(config, function () {
+        startMusic();
+        stage.inert = false;
+        rootEl.classList.add('is-revealed');
+        prompt.focus({ preventScroll: true });
+      });
+      stage.inert = true;
+      rootEl.appendChild(curtain.el);
+    } else {
+      rootEl.classList.add('is-revealed');
     }
 
     var index = 0;
@@ -251,7 +303,9 @@
         if (k === index) d.setAttribute('aria-current', 'page');
         else d.removeAttribute('aria-current');
       });
-      rootEl.classList.toggle('is-open', index > 0);
+      rootEl.classList.toggle('is-open', index > 0 && index < total - 1);
+      rootEl.classList.toggle('is-closed', index === 0);
+      rootEl.classList.toggle('is-back', index === total - 1);
       prev.disabled = index === 0;
       next.disabled = index === total - 1;
       counter.textContent = index + 1 + ' / ' + total;
@@ -259,28 +313,63 @@
       if (announce) live.textContent = L.page + ' ' + (index + 1) + ' ' + L.of + ' ' + total + ': ' + pages[index].label;
     }
 
-    function goTo(i, silent) {
+    var lockUntil = 0;
+    function goTo(i, opts) {
       i = Math.max(0, Math.min(total - 1, i | 0));
-      if (i === index && !silent) return;
+      if (i === index) return;
       var from = index;
       index = i;
+      lockUntil = Date.now() + turnMs * 0.85;
       var moving = i > from ? leaves.slice(from, i) : leaves.slice(i, from);
       moving.forEach(function (leaf) {
         leaf.classList.add('is-moving');
-        setTimeout(function () { leaf.classList.remove('is-moving'); }, 2600);
+        setTimeout(function () { leaf.classList.remove('is-moving'); }, turnMs + 200);
       });
-      var hadFocus = leaves[from].contains(document.activeElement);
-      update(!silent);
-      // Keep keyboard focus inside the invitation when its leaf becomes inert.
-      if (hadFocus) (index === total - 1 ? prev : next).focus({ preventScroll: true });
+      var hadFocus = leaves[from].contains(document.activeElement) || document.activeElement === prompt;
+      update(!(opts && opts.silent));
+      if (hadFocus) (index === 0 ? prompt : index === total - 1 ? prev : next).focus({ preventScroll: true });
     }
 
     function open() {
-      if (C.musicSrc && C.musicOnOpen && !ctx.music.isPlaying()) ctx.music.play();
+      if (curtain && !curtain.isOpen()) {
+        curtain.open();
+        return;
+      }
+      startMusic();
       goTo(1);
     }
 
-    // Swipe support
+    function step(dir) {
+      if (Date.now() < lockUntil) return;
+      if (dir > 0) {
+        if (index === 0) open();
+        else goTo(index + 1);
+      } else goTo(index - 1);
+    }
+
+    // Scroll-wheel / trackpad: one page per gesture. A page whose own text
+    // overflows scrolls first.
+    var wheelAcc = 0;
+    var wheelTimer = null;
+    function onWheel(e) {
+      if (curtain && !curtain.isOpen()) return;
+      var scroller = e.target.closest && e.target.closest('.fb-page-inner');
+      if (scroller && scroller.scrollHeight > scroller.clientHeight + 2) {
+        var atTop = scroller.scrollTop <= 0, atEnd = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2;
+        if ((e.deltaY > 0 && !atEnd) || (e.deltaY < 0 && !atTop)) return;
+      }
+      e.preventDefault();
+      wheelAcc += e.deltaY;
+      clearTimeout(wheelTimer);
+      wheelTimer = setTimeout(function () { wheelAcc = 0; }, 220);
+      if (Math.abs(wheelAcc) > 40) {
+        step(wheelAcc > 0 ? 1 : -1);
+        wheelAcc = 0;
+      }
+    }
+    rootEl.addEventListener('wheel', onWheel, { passive: false });
+
+    // Swipes: left/up = next, right/down = previous.
     var startX = null, startY = 0;
     book.addEventListener('pointerdown', function (e) {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -291,18 +380,25 @@
       if (startX === null) return;
       var dx = e.clientX - startX, dy = e.clientY - startY;
       startX = null;
-      if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy) * 1.3) return;
-      if (index === 0 && dx < 0) open();
-      else goTo(index + (dx < 0 ? 1 : -1));
+      var horizontal = Math.abs(dx) > Math.abs(dy);
+      var d = horizontal ? dx : dy;
+      if (Math.abs(d) < 45) return;
+      step(d < 0 ? 1 : -1);
     });
     book.addEventListener('pointercancel', function () { startX = null; });
 
     function onKey(e) {
       var t = e.target;
       if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-        if (index === 0) open(); else goTo(index + 1);
-      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') goTo(index - 1);
+      if (curtain && !curtain.isOpen()) {
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+          curtain.open();
+          e.preventDefault();
+        }
+        return;
+      }
+      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === 'ArrowDown') step(1);
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp' || e.key === 'ArrowUp') step(-1);
       else if (e.key === 'Home') goTo(0);
       else if (e.key === 'End') goTo(total - 1);
       else return;
@@ -312,9 +408,8 @@
     cleanups.push(function () { document.removeEventListener('keydown', onKey); });
 
     // Restore the previous page without animating when re-rendering.
-    var startIndex = ctx.state && typeof ctx.state.index === 'number' ? Math.min(ctx.state.index, total - 1) : 0;
     rootEl.classList.add('no-anim');
-    index = startIndex;
+    index = ctx.state && typeof ctx.state.index === 'number' ? Math.min(ctx.state.index, total - 1) : 0;
     update(false);
     mount.appendChild(rootEl);
     requestAnimationFrame(function () {
@@ -339,7 +434,7 @@
 
     return {
       goTo: function (i) { goTo(i); },
-      getState: function () { return { index: index }; },
+      getState: function () { return { index: index, curtainOpen: !curtain || curtain.isOpen() }; },
       destroy: function () {
         cleanups.forEach(function (fn) { if (fn) fn(); });
         cleanups = [];

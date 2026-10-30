@@ -2,27 +2,31 @@
 
 ## 1. Reference and verified behaviour
 
-The brief points to `https://kasim-khadija.vercel.app` and a screen
-recording. Neither could be inspected while this was built: the domain is
-blocked by the build environment's network policy, and the recording was not
-attached. The design below therefore follows the written brief and the
-supplied starter HTML (`wedding_invitation_studio.html`). It reproduces the
-described style (ornate floral book cover, page turns, music control,
-countdown) with original artwork, and copies no code or assets from the
-reference.
+The reference site (`kasim-khadija.vercel.app`) is blocked by the build
+environment's network policy, so the design was checked against the supplied
+screen recording (64 s, portrait phone). The template recreates the
+interaction and layout with original artwork. No code, images or personal
+details from the reference were copied.
 
-Interactions implemented and verified by `tests/e2e/run.mjs`:
+Verified in the recording, and how Floral Book implements it:
 
-| Interaction | Behaviour |
+| Reference | Implementation |
 | --- | --- |
-| Landing | Full-screen floral background, a closed book with a damask cover, gold double frame, floral corners, a medallion with Arabic names (or initials), script names, the date and a pulsing “Tap to open” seal. |
-| Open | Tapping the cover, swiping left, or pressing → turns the cover. Music starts at that moment if one was uploaded, because the tap counts as the user gesture browsers require. |
-| Page turn | Each leaf rotates around the spine in 3D with a moving shadow. On wide screens the book opens into a two-page spread: the back of the turned page shows on the left. On narrow screens turned pages swing away. The transition can also be set to slide or fade. |
-| Navigation | Previous/next buttons, page dots, an “n / total” counter, arrow, Home and End keys, and swipe gestures. “Read again” closes the book. |
-| Pages | Cover → Bismillah, family introduction and couple → verse and message → one page per event (date block, time, Hijri date, venue, map button) → countdown → photo → RSVP → closing. Optional sections are left out entirely when turned off. |
-| Countdown | Live days/hours/minutes/seconds to a target time in a chosen UTC offset. Shows a configurable message once the date has passed. |
-| Music | A floating button with an equaliser animation while playing. It pauses when the tab is hidden and resumes when it returns. A visible error state appears if the file cannot play. |
-| Reduced motion | Follows `prefers-reduced-motion`, or can be forced either way: fades instead of 3D turns, no petals, no pulsing. |
+| Full-screen pink curtain with pearl strands and swags, “Pull the strings to open” | `core.curtain()`: two procedurally drawn curtain panels (`art.curtain`) with a tassel prompt. Any tap, swipe, scroll or key press draws them apart, and music starts at that moment. |
+| Closed dusty-rose book with a baroque gold oval medallion holding Arabic calligraphy, lace florals in the top-left and bottom-right, visible page edges, “Scroll to open the book” pill | Cover leaf with damask texture, spine bands, `art.ovalFrame`, gold frame, pearl-studded corner clusters, layered page edges and the prompt pill. |
+| Scrolling turns pages around the spine, one page per gesture; scrolling up turns back | Wheel and trackpad, vertical and horizontal swipes, arrow keys and buttons all turn pages, with one turn per gesture. |
+| Page 1: Bismillah calligraphy, monogram and Arabic names | Monogram page: Bismillah, Arabic names in the calligraphy font, and the Latin names. |
+| Page 2: “In the name of Allah…”, Arabic phrase, transliteration, “With the blessings of” and family names | Blessings page (`invitation.blessings` with the optional verse). |
+| Page 3: “We cordially invite you to the Nikah & Reception of”, script names with “(S/O …)” / “(D/O …)”, a satin ribbon | Invitation page with the ribbon (`art.ribbon`). |
+| Event pages: large serif title (“Nikkah”), weekday and date, Hijri date, prayer-time note, time, “At,” venue | One page per event. |
+| Final page: “Awaiting your presence” + family name in script | Closing page. |
+| Back cover: “Countdown to the Nikah”, 4 boxes, venue pills with map pins, “↺ Open again” | Back-cover leaf with the countdown, map pills and an “Open again” button. |
+| Music button top-right with equaliser bars | Shared music control. |
+| Blush notched-corner page frames with gold star ornaments | `art.pageFrame`. |
+
+Added beyond the recording: an optional photo page and RSVP page, the
+desktop two-page spread, page dots and buttons, a reduced-motion mode,
+keyboard support and screen-reader page announcements.
 
 ## 2. Configuration schema
 
@@ -123,7 +127,8 @@ be replaced by hand, and the editor accepts an uploaded background instead.
 
 ## 6. Known limitations
 
-- The reference site and recording could not be compared visually (see §1).
+- The live reference site could not be opened from the build environment.
+  Fidelity was checked against the screen recording (see §1).
 - The automatic Hijri date uses the Umm al-Qura calendar from the browser's
   `Intl` support. Local moon sighting can differ by a day, so it can be
   switched off per event and typed by hand.

@@ -60,7 +60,7 @@ async function previewEval(fn, arg) {
 await page.goto(EDITOR);
 await page.evaluate(() => localStorage.clear());
 await page.goto(`${EDITOR}#/templates`);
-check('gallery lists both templates', (await page.locator('.template-card').count()) === 2);
+check('gallery lists all three templates', (await page.locator('.template-card').count()) === 3);
 await page.locator('.template-card').first().getByRole('button', { name: 'Preview' }).click();
 const dialogOk = await page.frameLocator('#template-dialog-host iframe').locator('.fb-cover-names').waitFor({ timeout: 5000 }).then(() => true, () => false);
 check('template preview dialog renders the book', dialogOk);
@@ -79,7 +79,7 @@ check('preview updates with special characters as text', await waitPreview((t) =
 check('user HTML is not interpreted', (await previewEval(() => document.querySelectorAll('.fb-cover-names b').length)) === 0);
 await field("Bride's name in Arabic (optional)").fill('مريم');
 await field("Groom's name in Arabic (optional)").fill('يوسف');
-check('Arabic names render on the cover', await waitPreview(() => document.querySelector('.fb-medallion-text')?.textContent === 'مريم و يوسف'));
+check('Arabic names render on the cover', await waitPreview(() => document.querySelector('.fb-oval-text')?.textContent === 'مريم و يوسف'));
 await field("Groom's name").fill('Muhammad Abdur-Rahman Al-Hashimi');
 check('long names get a smaller size class', await waitPreview(() => !!document.querySelector('.fb-name[data-len="xlong"]')));
 
@@ -98,7 +98,7 @@ check('unsaved indicator or saved status is shown', /Unsaved|Draft saved/.test(a
 // Dates
 const nikah = page.locator('.list-item').first();
 await nikah.getByLabel('Date (Gregorian)', { exact: true }).fill('2027-03-05');
-check('event date updates the preview', await waitPreview(() => document.querySelector('[data-page="event-0"] .fb-date-day')?.textContent === '05'));
+check('event date updates the preview', await waitPreview(() => /Friday, 5\b|Friday, 05/.test(document.querySelector('[data-page="event-0"] .fb-date')?.textContent || '')));
 check('Hijri date is calculated', /\d{4}/.test(await nikah.getByLabel('Hijri date', { exact: true }).inputValue()));
 
 // Section toggles
@@ -135,6 +135,8 @@ await page.locator('.swatch').nth(0).click();
 await page.locator('.template-option', { hasText: 'Garden Scroll' }).click();
 check('switching template re-renders the preview', await frame().locator('.gs-names').waitFor({ timeout: 5000 }).then(() => true, () => false));
 await shot(page, 'editor-garden-scroll');
+await page.locator('.template-option', { hasText: 'Sealed Envelope' }).click();
+check('switching to the envelope template', await frame().locator('.se-seal').waitFor({ timeout: 5000 }).then(() => true, () => false));
 await page.locator('.template-option', { hasText: 'Floral Book' }).click();
 await frame().locator('.fb-cover-names').waitFor({ timeout: 5000 });
 
@@ -162,11 +164,18 @@ await page.locator('.field-asset', { hasText: 'Background artwork' }).locator('i
 check('mislabelled upload is rejected by content', await page.locator('#toast').filter({ hasText: /JPEG, PNG/ }).waitFor({ timeout: 3000 }).then(() => true, () => false));
 
 // ------------------------------------------------------------- preview interactions
-await frame().locator('.fb-open').click();
-check('opening the cover turns it', await waitPreview(() => document.querySelector('.fb-cover').classList.contains('is-turned')));
-check('music starts from the open tap', await waitPreview(() => document.querySelector('.wis-music')?.getAttribute('aria-pressed') === 'true', null, 5000));
+await frame().locator('.wis-curtain-pull').click();
+check('curtain opens in the preview', await waitPreview(() => { const c = document.querySelector('.wis-curtain'); return !c || c.classList.contains('is-open'); }));
+check('music starts from the curtain tap', await waitPreview(() => document.querySelector('.wis-music')?.getAttribute('aria-pressed') === 'true', null, 5000));
 await frame().locator('.wis-music').click();
 check('music button pauses', await waitPreview(() => document.querySelector('.wis-music').getAttribute('aria-pressed') === 'false'));
+await page.waitForTimeout(1500);
+await frame().locator('.fb-prompt').click();
+check('opening the cover turns it', await waitPreview(() => document.querySelector('.fb-cover').classList.contains('is-turned')));
+check('preview keeps the open page while editing', await (async () => {
+  await field('Heading').first().fill('Live edit check');
+  return waitPreview(() => document.querySelector('.fb-cover').classList.contains('is-turned') && !document.querySelector('.wis-curtain'));
+})());
 await page.waitForTimeout(1000);
 await shot(page, 'editor-preview-open');
 await page.locator('[data-viewport="desktop"]').click();
@@ -261,7 +270,7 @@ await phone.close();
     if (!found) missing.push(label);
   }
   // Photo fields only render once a photo is uploaded (covered by the upload checks).
-  const expectedElsewhere = ['Photo heading', 'Photo caption', 'Browser tab / link preview title', 'Link preview description', 'Pre-filled WhatsApp message', 'Track title (optional)'];
+  const expectedElsewhere = ['Photo heading', 'Photo caption', 'View details', 'Browser tab / link preview title', 'Link preview description', 'Pre-filled WhatsApp message', 'Track title (optional)'];
   const reallyMissing = missing.filter((m) => !expectedElsewhere.some((e) => m.startsWith(e)));
   check(`every visible text field updates the preview (${n} fields)`, reallyMissing.length === 0, reallyMissing.join(', '));
   const title = await (await (await p.locator('#preview-host iframe').elementHandle()).contentFrame()).evaluate(() => document.title);
@@ -313,37 +322,52 @@ async function exerciseBook(pg, label) {
   await pg.waitForTimeout(400);
   check(`${label}: fonts load locally`, await pg.evaluate(async () => { await document.fonts.ready; return document.fonts.check('32px "Great Vibes"') && [...document.fonts].some((f) => f.family.includes('Great Vibes') && f.status === 'loaded'); }));
   check(`${label}: no horizontal overflow`, await pg.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  check(`${label}: curtain covers the invitation first`, await pg.locator('.wis-curtain-pull').isVisible());
+  check(`${label}: music does not autoplay`, (await pg.locator('.wis-music').getAttribute('aria-pressed')) === 'false');
+  await shot(pg, `${label}-0-curtain`);
+  await pg.locator('.wis-curtain-pull').click();
+  await pg.waitForTimeout(2300);
+  check(`${label}: curtain opens and is removed`, await pg.locator('.wis-curtain').isHidden());
+  check(`${label}: music starts on the curtain tap`, (await pg.locator('.wis-music').getAttribute('aria-pressed')) === 'true');
   check(`${label}: book fits in the viewport`, await pg.evaluate(() => {
     const r = document.querySelector('.fb-book').getBoundingClientRect();
     return r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth;
   }));
-  check(`${label}: music does not autoplay`, (await pg.locator('.wis-music').getAttribute('aria-pressed')) === 'false');
-  await shot(pg, `${label}-0-cover`);
-  await pg.locator('.fb-open').click();
-  await pg.waitForTimeout(1100);
-  check(`${label}: music starts on open`, (await pg.locator('.wis-music').getAttribute('aria-pressed')) === 'true');
-  await shot(pg, `${label}-1-open`);
+  check(`${label}: scroll prompt is shown on the closed book`, await pg.locator('.fb-prompt').isVisible());
+  await shot(pg, `${label}-1-cover`);
+  const box = await pg.locator('.fb-book').boundingBox();
+  await pg.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await pg.mouse.wheel(0, 150);
+  await pg.waitForTimeout(1300);
+  check(`${label}: scrolling opens the book`, (await pg.locator('.fb-counter').textContent()).startsWith('2 /'));
+  await shot(pg, `${label}-2`);
   const total = await pg.locator('.fb-leaf').count();
-  for (let i = 2; i < total; i++) {
+  for (let i = 3; i <= total; i++) {
     await pg.locator('.fb-nav-btn').nth(1).click();
-    await pg.waitForTimeout(1000);
+    await pg.waitForTimeout(1150);
     await shot(pg, `${label}-${i}`);
   }
-  check(`${label}: turns through all ${total} pages`, (await pg.locator('.fb-counter').textContent()) === `${total} / ${total}`);
-  check(`${label}: countdown shows numbers`, /^\d+$/.test(await pg.locator('.wis-count-num').first().textContent()));
+  check(`${label}: turns through all ${total} pages to the back cover`, (await pg.locator('.fb-counter').textContent()) === `${total} / ${total}`);
+  check(`${label}: back cover countdown shows numbers`, /^\d+$/.test(await pg.locator('.fb-backcover .wis-count-num').first().textContent()));
+  check(`${label}: back cover links every venue`, (await pg.locator('.fb-backcover .fb-pill').count()) === 2);
   await pg.keyboard.press('ArrowLeft');
-  await pg.waitForTimeout(900);
+  await pg.waitForTimeout(1100);
   check(`${label}: keyboard navigation`, (await pg.locator('.fb-counter').textContent()) === `${total - 1} / ${total}`);
-  const box = await pg.locator('.fb-book').boundingBox();
   await pg.mouse.move(box.x + box.width * 0.8, box.y + box.height / 2);
   await pg.mouse.down();
   await pg.mouse.move(box.x + box.width * 0.2, box.y + box.height / 2, { steps: 6 });
   await pg.mouse.up();
-  await pg.waitForTimeout(900);
+  await pg.waitForTimeout(1100);
   check(`${label}: swipe navigation`, (await pg.locator('.fb-counter').textContent()) === `${total} / ${total}`);
-  await pg.locator('.fb-replay').click();
-  await pg.waitForTimeout(900);
-  check(`${label}: “Read again” closes the book`, !(await pg.locator('.fb-cover').getAttribute('class')).includes('is-turned'));
+  await pg.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await pg.mouse.wheel(0, -150);
+  await pg.waitForTimeout(1100);
+  check(`${label}: scrolling up turns back`, (await pg.locator('.fb-counter').textContent()) === `${total - 1} / ${total}`);
+  await pg.locator('.fb-nav-btn').nth(1).click();
+  await pg.waitForTimeout(1100);
+  await pg.locator('.fb-again').click();
+  await pg.waitForTimeout(1100);
+  check(`${label}: “Open again” closes the book`, !(await pg.locator('.fb-cover').getAttribute('class')).includes('is-turned'));
   await pg.locator('.wis-music').click();
   check(`${label}: music button pauses`, await pg.waitForFunction(() => document.querySelector('.wis-music').getAttribute('aria-pressed') === 'false', null, { timeout: 3000 }).then(() => true, () => false));
 }
@@ -364,6 +388,8 @@ for (const [label, viewport, touch] of [['zip-mobile', { width: 390, height: 844
   const s = await verifySite(SITE, 'zip-reduced', { viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
   await s.pg.locator('.fb').waitFor();
   check('reduced motion uses fades', (await s.pg.locator('.fb').getAttribute('data-turn')) === 'fade');
+  await s.pg.locator('.wis-curtain-pull').click();
+  check('reduced motion: curtain clears quickly', await s.pg.locator('.wis-curtain').waitFor({ state: 'hidden', timeout: 1200 }).then(() => true, () => false));
   check('reduced motion disables petals', (await s.pg.locator('.fb-petals').count()) === 0);
   await s.ctx.close();
 }
@@ -400,11 +426,43 @@ for (const [label, viewport, touch] of [['zip-mobile', { width: 390, height: 844
   const srv = await serve(dir, 0);
   const s = await verifySite(`http://127.0.0.1:${srv.address().port}/`, 'garden', { viewport: { width: 390, height: 844 } });
   check('garden scroll export renders', await s.pg.locator('.gs-names').waitFor({ timeout: 5000 }).then(() => true, () => false));
+  await s.pg.locator('.wis-curtain-pull').click();
+  await s.pg.waitForTimeout(2100);
   await s.pg.mouse.wheel(0, 2000);
   await s.pg.waitForTimeout(1200);
   check('garden scroll reveals sections', (await s.pg.locator('.gs-reveal.is-visible').count()) > 0);
   await s.pg.screenshot({ path: path.join(OUT, 'garden-full.png'), fullPage: true });
   check('garden scroll: no external requests or errors', s.external.length === 0 && s.errs.length === 0 && s.failed.length === 0, [...s.external, ...s.errs, ...s.failed].join(' | '));
+  await s.ctx.close();
+  srv.close();
+}
+
+{
+  // Sealed Envelope template export.
+  const sources = await nodeSources();
+  const config = normalizeConfig({ ...createDefaultConfig(), template: 'sealed-envelope' });
+  const { files } = buildSite({ config, sources, mode: 'zip', art: InviteArt });
+  const dir = path.join(OUT, 'envelope');
+  for (const f of files) {
+    await mkdir(path.dirname(path.join(dir, f.path)), { recursive: true });
+    await writeFile(path.join(dir, f.path), f.data);
+  }
+  const srv = await serve(dir, 0);
+  const s = await verifySite(`http://127.0.0.1:${srv.address().port}/`, 'envelope', { viewport: { width: 390, height: 844 } });
+  await s.pg.locator('.se-seal').waitFor({ timeout: 5000 });
+  check('envelope: page is locked until opened', await s.pg.evaluate(() => document.documentElement.classList.contains('se-locked')));
+  await shot(s.pg, 'envelope-0-closed');
+  await s.pg.locator('.se-seal').click();
+  await s.pg.waitForTimeout(2700);
+  check('envelope: seal opens the letter', await s.pg.locator('.se.is-open').count() === 1);
+  check('envelope: scrolling is unlocked', !(await s.pg.evaluate(() => document.documentElement.classList.contains('se-locked'))));
+  await shot(s.pg, 'envelope-1-open');
+  await s.pg.mouse.wheel(0, 1500);
+  await s.pg.waitForTimeout(1200);
+  check('envelope: detail cards reveal', (await s.pg.locator('.se-reveal.is-visible').count()) > 0);
+  check('envelope: countdown renders', /^\d+$/.test(await s.pg.locator('.wis-count-num').first().textContent()));
+  await s.pg.screenshot({ path: path.join(OUT, 'envelope-full.png'), fullPage: true });
+  check('envelope: no external requests or errors', s.external.length === 0 && s.errs.length === 0 && s.failed.length === 0, [...s.external, ...s.errs, ...s.failed].join(' | '));
   await s.ctx.close();
   srv.close();
 }

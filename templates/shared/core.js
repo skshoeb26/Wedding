@@ -23,8 +23,9 @@
     days: 'Days', hours: 'Hours', minutes: 'Minutes', seconds: 'Seconds',
     viewMap: 'View location', venue: 'Venue', call: 'Call', whatsapp: 'WhatsApp',
     rsvpLink: 'Respond online', rsvpBy: 'Kindly respond by', previous: 'Previous page',
-    next: 'Next page', open: 'Open invitation', readAgain: 'Read again',
-    playMusic: 'Play music', pauseMusic: 'Pause music', page: 'Page', of: 'of'
+    next: 'Next page', open: 'Open invitation', readAgain: 'Open again',
+    playMusic: 'Play music', pauseMusic: 'Pause music', page: 'Page', of: 'of',
+    details: 'View details'
   };
 
   function get(obj, path, fallback) {
@@ -388,7 +389,13 @@
         parents2: str(p2.parents, 200).trim(),
         initials: (name1.charAt(0) + ' ' + (str(get(inv, 'couple.joiner', '&'), 12) || '&') + ' ' + name2.charAt(0))
       },
-      heading: str(inv.heading, 120),
+      heading: str(inv.heading, 160),
+      blessings: enabled(config, 'blessings') ? {
+        intro: str(get(inv, 'blessings.intro', ''), 300).trim(),
+        heading: str(get(inv, 'blessings.heading', ''), 120).trim(),
+        names: str(get(inv, 'blessings.names', ''), 600).split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean).slice(0, 8)
+      } : null,
+      curtainPrompt: str(inv.curtainPrompt, 80).trim(),
       coverTagline: str(inv.coverTagline, 120),
       coverDate: enabled(config, 'coverDate') && events[0] ? events[0].dateText : '',
       openPrompt: str(inv.openPrompt, 80),
@@ -573,6 +580,40 @@
     return wrap;
   }
 
+  // Full-screen curtain shown before the invitation. Any tap, key press or
+  // scroll on it draws the curtains apart (and counts as the user gesture
+  // that lets music start).
+  function curtain(config, onOpen) {
+    var art = root.InviteArt;
+    var colors = get(config, 'theme.colors', {});
+    var prompt = str(get(config, 'invitation.curtainPrompt', ''), 80).trim() || 'Pull the strings to open';
+    var uri = art.dataUri(art.curtain(colors));
+    var opened = false;
+    var btn = el('button', { type: 'button', className: 'wis-curtain-pull' },
+      el('span', { className: 'wis-curtain-tassel', 'aria-hidden': 'true' }),
+      el('span', { className: 'wis-curtain-text', text: prompt }),
+      el('span', { className: 'wis-curtain-chevron', 'aria-hidden': 'true' }));
+    var wrap = el('div', { className: 'wis-curtain' },
+      el('div', { className: 'wis-curtain-panel is-left', 'aria-hidden': 'true' }, el('img', { src: uri, alt: '' })),
+      el('div', { className: 'wis-curtain-panel is-right', 'aria-hidden': 'true' }, el('img', { src: uri, alt: '' })),
+      btn);
+    function open() {
+      if (opened) return;
+      opened = true;
+      wrap.classList.add('is-open');
+      if (onOpen) onOpen();
+      setTimeout(function () { wrap.hidden = true; }, reducedMotion(config) ? 450 : 1900);
+    }
+    wrap.addEventListener('click', open);
+    wrap.addEventListener('wheel', open, { passive: true });
+    var startY = null;
+    wrap.addEventListener('pointerdown', function (e) { startY = e.clientY; });
+    wrap.addEventListener('pointermove', function (e) {
+      if (startY !== null && Math.abs(e.clientY - startY) > 30) open();
+    });
+    return { el: wrap, open: open, isOpen: function () { return opened; }, focus: function () { btn.focus({ preventScroll: true }); } };
+  }
+
   function linkButton(href, text, iconName, extra) {
     if (!href) return null;
     var external = /^https?:/i.test(href);
@@ -617,6 +658,7 @@
     musicButton: musicButton,
     countdownWidget: countdownWidget,
     linkButton: linkButton,
+    curtain: curtain,
     arabic: arabic,
     textBlock: textBlock,
     FONT_STACKS: FONT_STACKS,

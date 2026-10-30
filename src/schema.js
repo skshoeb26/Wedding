@@ -24,7 +24,7 @@ export const FONT_CHOICES = {
 export const THEME_PRESETS = {
   'dusty-rose': {
     name: 'Dusty Rose & Gold',
-    colors: { primary: '#9c5b63', rose: '#d9a3a5', accent: '#b8925a', paper: '#fffaf2', ink: '#4f3535', background: '#f2dcd6' }
+    colors: { primary: '#a4605b', rose: '#e6b5ad', accent: '#c19e6a', paper: '#fcf1ec', ink: '#6e4442', background: '#d9a39a' }
   },
   'sage-ivory': {
     name: 'Sage & Ivory',
@@ -45,69 +45,72 @@ export function createDefaultConfig(templateId = 'floral-book') {
     schemaVersion: SCHEMA_VERSION,
     template: templateId,
     invitation: {
-      heading: 'Wedding Invitation',
-      coverTagline: 'The wedding celebration of',
-      openPrompt: 'Tap to open',
+      heading: 'We cordially invite you to the Nikah & Reception of',
+      coverTagline: 'The wedding of',
+      openPrompt: '',
+      curtainPrompt: 'Pull the strings to open',
       bismillah: 'بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
       couple: {
         joiner: '&',
         partner1: {
           name: 'Ayesha',
-          fullName: 'Ayesha Siddiqui',
+          fullName: '',
           arabicName: 'عائشة',
-          parents: 'Daughter of Mr. Imran & Mrs. Sana Siddiqui'
+          parents: '(D/O Sana & Imran Siddiqui)'
         },
         partner2: {
           name: 'Zayan',
-          fullName: 'Zayan Ahmed',
+          fullName: '',
           arabicName: 'زيان',
-          parents: 'Son of Mr. Faisal & Mrs. Huma Ahmed'
+          parents: '(S/O Huma & Faisal Ahmed)'
         }
       },
-      familyIntro:
-        'With the blessings of Allah, together with their families, we request the honour of your presence at the marriage of',
-      message:
-        'Your presence and duas would make our celebration complete. We look forward to sharing this blessed day with you.',
+      familyIntro: '',
+      message: '',
+      blessings: {
+        intro: 'In the name of Allah, the Most Gracious, the Most Merciful, and with the blessings of the Prophet ﷺ',
+        heading: 'With the blessings of',
+        names: 'Mrs Rukhsana & Mr Yusuf Siddiqui\nMrs Farida & Mr Anwar Ahmed'
+      },
       quote: {
-        arabic: 'وَمِنْ آيَاتِهِ أَنْ خَلَقَ لَكُم مِّنْ أَنفُسِكُمْ أَزْوَاجًا لِّتَسْكُنُوا إِلَيْهَا وَجَعَلَ بَيْنَكُم مَّوَدَّةً وَرَحْمَةً',
-        translation:
-          'And of His signs is that He created for you from yourselves mates that you may find tranquillity in them; and He placed between you affection and mercy.',
-        reference: 'Surah Ar-Rum · 30:21'
+        arabic: 'رَبَّنَا هَبْ لَنَا مِنْ أَزْوَاجِنَا وَذُرِّيَّاتِنَا قُرَّةَ أَعْيُنٍ',
+        translation: 'Our Lord, grant us from our spouses and offspring comfort to our eyes.',
+        reference: 'Surah Al-Furqan · 25:74'
       },
       events: [
         {
           id: 'nikah',
           enabled: true,
-          label: 'Nikah Ceremony',
+          label: 'Nikah',
           date: '2027-02-14',
           time: '11:00',
           endTime: '',
           hijriAuto: true,
           hijriDate: '',
-          venueName: 'The Garden Pavilion',
-          address: '12 Rose Garden Road, Koregaon Park, Pune',
+          venueName: 'Al Noor Masjid',
+          address: 'Koregaon Park, Pune',
           mapsUrl: '',
-          note: ''
+          note: 'After Salat ul Zuhr'
         },
         {
           id: 'reception',
           enabled: true,
-          label: 'Walima Reception',
+          label: 'Reception',
           date: '2027-02-15',
           time: '19:30',
           endTime: '',
           hijriAuto: true,
           hijriDate: '',
           venueName: 'Rosewood Banquet Hall',
-          address: '48 Lake View Avenue, Kalyani Nagar, Pune',
+          address: 'Kalyani Nagar, Pune',
           mapsUrl: '',
-          note: 'Dinner will be served.'
+          note: 'Onwards'
         }
       ],
       countdown: {
         target: '2027-02-14T11:00',
         utcOffset: '+05:30',
-        heading: 'Counting the days',
+        heading: 'Countdown to the Nikah',
         expiredMessage: 'Alhamdulillah — the celebration has begun!'
       },
       gallery: { heading: 'Our journey begins', caption: '' },
@@ -124,9 +127,9 @@ export function createDefaultConfig(templateId = 'floral-book') {
         link: ''
       },
       closing: {
-        heading: 'With love & duas',
-        message: 'Your presence is the greatest gift. We look forward to celebrating with you.',
-        signature: 'The Siddiqui & Ahmed families',
+        heading: 'Awaiting your presence',
+        message: '',
+        signature: "Siddiqui's & Ahmed's",
         hashtag: '#AyeshaWedsZayan'
       },
       music: { title: '', startOnOpen: true, volume: 0.7 },
@@ -135,6 +138,7 @@ export function createDefaultConfig(templateId = 'floral-book') {
     sections: {
       bismillah: true,
       coverDate: true,
+      blessings: true,
       family: true,
       quote: true,
       events: true,
@@ -148,7 +152,7 @@ export function createDefaultConfig(templateId = 'floral-book') {
       colors: clone(THEME_PRESETS['dusty-rose'].colors),
       fonts: {
         script: 'Great Vibes',
-        heading: 'Cormorant Garamond',
+        heading: 'Marcellus',
         body: 'Cormorant Garamond',
         arabic: 'Amiri',
         calligraphy: 'Aref Ruqaa'
@@ -156,8 +160,9 @@ export function createDefaultConfig(templateId = 'floral-book') {
       textScale: 1
     },
     animation: {
+      intro: 'curtain',
       pageTurn: 'flip',
-      pageTurnMs: 900,
+      pageTurnMs: 1000,
       petals: true,
       reducedMotion: 'auto'
     },
@@ -223,7 +228,7 @@ function normalizeAssetRef(ref) {
   };
 }
 
-export function normalizeConfig(input, templateIds = ['floral-book', 'garden-scroll']) {
+export function normalizeConfig(input, templateIds = ['floral-book', 'garden-scroll', 'sealed-envelope']) {
   const src = isPlainObject(input) ? input : {};
   const templateId = templateIds.includes(src.template) ? src.template : templateIds[0];
   const defaults = createDefaultConfig(templateId);
@@ -257,6 +262,7 @@ export function normalizeConfig(input, templateIds = ['floral-book', 'garden-scr
   out.theme.textScale = Math.min(1.3, Math.max(0.8, out.theme.textScale));
   if (!['flip', 'fade', 'slide'].includes(out.animation.pageTurn)) out.animation.pageTurn = 'flip';
   if (!['auto', 'reduce', 'full'].includes(out.animation.reducedMotion)) out.animation.reducedMotion = 'auto';
+  if (!['curtain', 'none'].includes(out.animation.intro)) out.animation.intro = 'curtain';
   out.animation.pageTurnMs = Math.min(2500, Math.max(200, Math.round(out.animation.pageTurnMs)));
   out.invitation.music.volume = Math.min(1, Math.max(0, out.invitation.music.volume));
   if (!['ltr', 'rtl'].includes(out.meta.dir)) out.meta.dir = 'ltr';

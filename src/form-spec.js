@@ -59,7 +59,8 @@ export const FORM = [
     fields: [
       { type: 'text', path: 'invitation.coverTagline', label: 'Cover tagline', maxLength: 120 },
       { type: 'toggle', path: 'sections.coverDate', label: 'Show the first event date on the cover' },
-      { type: 'text', path: 'invitation.openPrompt', label: 'Open button text', maxLength: 80 },
+      { type: 'text', path: 'invitation.openPrompt', label: 'Open prompt text', maxLength: 80, placeholder: 'Template default, e.g. “Scroll to open the book”' },
+      { type: 'text', path: 'invitation.curtainPrompt', label: 'Curtain prompt', maxLength: 80, showIf: (c) => c.animation.intro === 'curtain' && c.template !== 'sealed-envelope' },
       { type: 'toggle', path: 'sections.bismillah', label: 'Show Bismillah' },
       { type: 'text', path: 'invitation.bismillah', label: 'Bismillah text', dir: 'rtl', maxLength: 200, showIf: on('sections.bismillah') },
       { type: 'text', path: 'invitation.heading', label: 'Invitation heading', maxLength: 120 },
@@ -69,9 +70,13 @@ export const FORM = [
   },
   {
     id: 'message',
-    title: 'Message & verse',
+    title: 'Blessings, verse & message',
     fields: [
-      { type: 'textarea', path: 'invitation.message', label: 'Invitation message', maxLength: 1200 },
+      { type: 'toggle', path: 'sections.blessings', label: 'Show the blessings' },
+      { type: 'textarea', path: 'invitation.blessings.intro', label: 'Opening blessing', maxLength: 300, rows: 2, showIf: on('sections.blessings') },
+      { type: 'text', path: 'invitation.blessings.heading', label: 'Blessings heading', maxLength: 120, showIf: on('sections.blessings') },
+      { type: 'textarea', path: 'invitation.blessings.names', label: 'With the blessings of (one name per line)', maxLength: 600, rows: 3, showIf: on('sections.blessings') },
+      { type: 'textarea', path: 'invitation.message', label: 'Invitation message (optional)', maxLength: 1200 },
       { type: 'toggle', path: 'sections.quote', label: 'Show a verse or quotation' },
       { type: 'textarea', path: 'invitation.quote.arabic', label: 'Arabic text', dir: 'rtl', maxLength: 600, showIf: on('sections.quote') },
       { type: 'textarea', path: 'invitation.quote.translation', label: 'Translation', maxLength: 800, showIf: on('sections.quote') },
@@ -112,7 +117,7 @@ export const FORM = [
     id: 'countdown',
     title: 'Countdown',
     fields: [
-      { type: 'toggle', path: 'sections.countdown', label: 'Show the countdown page' },
+      { type: 'toggle', path: 'sections.countdown', label: 'Show the countdown' },
       { type: 'datetime', path: 'invitation.countdown.target', label: 'Count down to', showIf: on('sections.countdown') },
       { type: 'select', path: 'invitation.countdown.utcOffset', label: 'Time zone of the wedding', options: UTC_OFFSETS, showIf: on('sections.countdown'), hint: 'Guests in other countries will see an accurate countdown.' },
       { type: 'action', action: 'countdownFromEvent', label: 'Use the first event’s date and time', showIf: on('sections.countdown') },
@@ -176,6 +181,9 @@ export const FORM = [
     id: 'animation',
     title: 'Animation',
     fields: [
+      { type: 'select', path: 'animation.intro', label: 'Opening reveal', options: [
+        { value: 'curtain', label: 'Pearl curtain (tap to open)' }, { value: 'none', label: 'None — show the invitation directly' }],
+        hint: 'The Sealed Envelope template always opens with its envelope.' },
       { type: 'select', path: 'animation.pageTurn', label: 'Page transition (book template)', options: [
         { value: 'flip', label: '3D page turn' }, { value: 'slide', label: 'Slide' }, { value: 'fade', label: 'Fade' }] },
       { type: 'range', path: 'animation.pageTurnMs', label: 'Transition speed', min: 400, max: 1800, step: 50, format: (v) => `${(v / 1000).toFixed(2)} s` },
@@ -206,7 +214,8 @@ export const FORM = [
           { type: 'text', path: 'invitation.labels.venue', label: 'Venue', placeholder: 'Venue', maxLength: 30 },
           { type: 'text', path: 'invitation.labels.viewMap', label: 'Map button', placeholder: 'View location', maxLength: 30 },
           { type: 'text', path: 'invitation.labels.rsvpBy', label: 'RSVP deadline', placeholder: 'Kindly respond by', maxLength: 40 },
-          { type: 'text', path: 'invitation.labels.readAgain', label: 'Read again', placeholder: 'Read again', maxLength: 30 }
+          { type: 'text', path: 'invitation.labels.readAgain', label: 'Open again', placeholder: 'Open again', maxLength: 30 },
+          { type: 'text', path: 'invitation.labels.details', label: 'View details', placeholder: 'View details', maxLength: 30 }
         ]
       }
     ]

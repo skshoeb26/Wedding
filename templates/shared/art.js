@@ -55,8 +55,8 @@
       ink: hex(colors.ink, '#4f3535'),
       background: hex(colors.background, '#f2dcd6')
     };
-    p.leaf = mix('#7d8f6e', p.ink, 0.15);
-    p.leafLight = mix(p.leaf, '#e9efdc', 0.45);
+    p.leaf = mix(mix('#8d8a62', p.accent, 0.45), p.ink, 0.12);
+    p.leafLight = mix(p.leaf, '#f3ead6', 0.5);
     p.roseLight = mix(p.rose, '#ffffff', 0.55);
     p.roseDeep = mix(p.rose, p.primary, 0.6);
     p.goldLight = mix(p.accent, '#fff4d8', 0.5);
@@ -87,6 +87,10 @@
       '<stop offset="0" stop-color="' + p.goldLight + '"/>' +
       '<stop offset="0.5" stop-color="' + p.accent + '"/>' +
       '<stop offset="1" stop-color="' + p.goldDeep + '"/></linearGradient>' +
+      '<radialGradient id="' + id + 'pearl" cx="35%" cy="30%" r="75%">' +
+      '<stop offset="0" stop-color="#ffffff"/>' +
+      '<stop offset="0.55" stop-color="' + mix(p.paper, p.rose, 0.18) + '"/>' +
+      '<stop offset="1" stop-color="' + mix(p.rose, p.ink, 0.25) + '"/></radialGradient>' +
       '</defs>';
   }
 
@@ -152,6 +156,22 @@
     return out + '</g>';
   }
 
+  function pearl(x, y, r, id) {
+    return '<circle cx="' + n(x) + '" cy="' + n(y) + '" r="' + n(r) + '" fill="url(#' + id + 'pearl)"/>';
+  }
+
+  // A string of pearls along a quadratic curve.
+  function pearlStrand(x0, y0, cx, cy, x1, y1, r, id, gap) {
+    var len = Math.hypot(cx - x0, cy - y0) + Math.hypot(x1 - cx, y1 - cy);
+    var count = Math.max(2, Math.round(len / (r * (gap || 2.3))));
+    var out = '';
+    for (var i = 0; i <= count; i++) {
+      var t = i / count, u = 1 - t;
+      out += pearl(u * u * x0 + 2 * u * t * cx + t * t * x1, u * u * y0 + 2 * u * t * cy + t * t * y1, r, id);
+    }
+    return out;
+  }
+
   // A rose cluster centred on (x, y), fanning toward `dir` degrees.
   function cluster(x, y, s, dir, p, id, seed) {
     var rand = rng(seed);
@@ -180,6 +200,11 @@
       var bd = s * (0.75 + rand() * 0.45);
       out += blossom(x + Math.cos(ba) * bd, y + Math.sin(ba) * bd, s * (0.06 + rand() * 0.05), p,
         b % 2 ? p.roseLight : p.paper);
+    }
+    for (var q = 0; q < 7; q++) {
+      var qa = rad + (rand() - 0.5) * 2.2;
+      var qd = s * (0.35 + rand() * 0.6);
+      out += pearl(x + Math.cos(qa) * qd, y + Math.sin(qa) * qd, s * (0.025 + rand() * 0.025), id);
     }
     return out;
   }
@@ -291,15 +316,20 @@
       var body = defs(p, id) + '<rect width="600" height="800" fill="' + p.background + '"/>' +
         cluster(40, 60, 170, 35, p, id, 31) + cluster(570, 760, 180, -140, p, id, 32) +
         cluster(560, 120, 110, 150, p, id, 33) + cluster(40, 720, 110, -40, p, id, 34);
-      if (variant === 'scroll') {
+      if (variant === 'envelope') {
+        body += '<rect x="110" y="300" width="380" height="250" rx="10" fill="' + mix(p.paper, p.rose, 0.2) + '" stroke="' + p.accent +
+          '" stroke-width="3"/><path d="M110 300L300 440L490 300" fill="' + mix(p.paper, p.rose, 0.35) + '" stroke="' + p.accent +
+          '" stroke-width="3"/><circle cx="300" cy="440" r="38" fill="' + p.primary + '"/><circle cx="300" cy="440" r="28" fill="none" stroke="' +
+          mix(p.primary, '#ffffff', 0.3) + '" stroke-width="3"/>';
+      } else if (variant === 'scroll') {
         body += '<rect x="150" y="150" width="300" height="500" rx="150" fill="' + p.paper + '" stroke="' +
           p.accent + '" stroke-width="4"/>' +
           '<rect x="200" y="330" width="200" height="10" rx="5" fill="' + p.rose + '"/>' +
           '<rect x="230" y="360" width="140" height="8" rx="4" fill="' + p.accent + '" opacity="0.6"/>' +
           '<rect x="210" y="420" width="180" height="70" rx="10" fill="' + mix(p.paper, p.rose, 0.2) + '"/>';
       } else {
-        body += '<rect x="160" y="150" width="290" height="470" rx="10" fill="' + mix(p.primary, '#000000', 0.15) +
-          '"/><rect x="150" y="140" width="290" height="470" rx="10" fill="' + p.primary + '"/>' +
+        body += '<rect x="160" y="150" width="290" height="470" rx="10" fill="' + mix(p.primary, '#000000', 0.05) +
+          '"/><rect x="150" y="140" width="290" height="470" rx="10" fill="' + mix(p.primary, p.rose, 0.48) + '"/>' +
           '<rect x="168" y="158" width="254" height="434" rx="6" fill="none" stroke="' + p.accent +
           '" stroke-width="4"/><rect x="178" y="168" width="234" height="414" rx="4" fill="none" stroke="' +
           p.accent + '" stroke-width="1.5"/>' +
@@ -310,6 +340,143 @@
           cluster(165, 160, 60, 45, p, id, 35) + cluster(430, 595, 60, -135, p, id, 36);
       }
       return svg(600, 800, body);
+    });
+  }
+
+  // One curtain panel (left side); the right panel is mirrored with CSS.
+  function curtain(colors) {
+    return memo('curtain', colors, function (p) {
+      var id = 'k';
+      var W = 540, H = 1920;
+      var light = mix(p.rose, '#ffffff', 0.35), dark = mix(p.rose, p.primary, 0.45);
+      var body = defs(p, id) +
+        '<linearGradient id="kfold" x1="0" y1="0" x2="1" y2="0">' +
+        '<stop offset="0" stop-color="' + dark + '"/><stop offset="0.35" stop-color="' + light + '"/>' +
+        '<stop offset="0.6" stop-color="' + mix(p.rose, '#ffffff', 0.15) + '"/><stop offset="1" stop-color="' + dark + '"/></linearGradient>' +
+        '<pattern id="klace" width="18" height="18" patternUnits="userSpaceOnUse">' +
+        '<circle cx="9" cy="9" r="1.6" fill="#ffffff" opacity="0.35"/><circle cx="0" cy="0" r="1" fill="#ffffff" opacity="0.25"/></pattern>' +
+        '<linearGradient id="kswag" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0" stop-color="' + light + '"/><stop offset="0.7" stop-color="' + mix(p.rose, p.primary, 0.2) + '"/>' +
+        '<stop offset="1" stop-color="' + dark + '"/></linearGradient>' +
+        '<rect width="' + W + '" height="' + H + '" fill="' + p.rose + '"/>';
+      // vertical folds
+      var x = 0, rand = rng(41);
+      while (x < W) {
+        var w = 46 + rand() * 30;
+        body += '<rect x="' + n(x) + '" y="0" width="' + n(w + 2) + '" height="' + H + '" fill="url(#kfold)"/>';
+        x += w;
+      }
+      body += '<rect width="' + W + '" height="' + H + '" fill="url(#klace)"/>';
+      // swags across the top
+      for (var row = 0; row < 4; row++) {
+        var y = 40 + row * 110, depth = 170 + row * 30;
+        for (var sx = -135; sx < W; sx += 270) {
+          body += '<path d="M' + sx + ' ' + y + 'Q' + (sx + 135) + ' ' + (y + depth * 2) + ' ' + (sx + 270) + ' ' + y +
+            'L' + (sx + 270) + ' ' + (y + 40) + 'Q' + (sx + 135) + ' ' + (y + depth * 2 + 50) + ' ' + sx + ' ' + (y + 40) +
+            'Z" fill="url(#kswag)" stroke="' + dark + '" stroke-opacity="0.35" stroke-width="2" opacity="' + (0.95 - row * 0.12) + '"/>' +
+            pearlStrand(sx, y + 18, sx + 135, y + depth * 2 + 34, sx + 270, y + 18, 9 - row, id, 2.1);
+        }
+      }
+      // hanging pearl strands near the opening edge
+      [W - 110, W - 40].forEach(function (px, k) {
+        var py = 30;
+        while (py < H * 0.62 - k * 40) {
+          var r = py % 300 < 40 ? 22 : 11;
+          body += pearl(px, py, r, id);
+          py += r * 2.1;
+        }
+      });
+      return svg(W, H, body, ' preserveAspectRatio="xMaxYMid slice"');
+    });
+  }
+
+  // Baroque oval frame for the book cover.
+  function ovalFrame(colors) {
+    return memo('oval', colors, function (p) {
+      var id = 'o';
+      var g = 'url(#' + id + 'gold)';
+      var body = defs(p, id) +
+        '<ellipse cx="200" cy="260" rx="128" ry="168" fill="' + mix(p.paper, p.rose, 0.12) + '"/>' +
+        '<ellipse cx="200" cy="260" rx="134" ry="174" fill="none" stroke="' + g + '" stroke-width="12"/>' +
+        '<ellipse cx="200" cy="260" rx="122" ry="162" fill="none" stroke="' + p.goldLight + '" stroke-width="2"/>' +
+        '<ellipse cx="200" cy="260" rx="146" ry="186" fill="none" stroke="' + g + '" stroke-width="2.5"/>';
+      for (var i = 0; i < 36; i++) {
+        var a = (Math.PI * 2 * i) / 36;
+        body += pearl(200 + Math.cos(a) * 141, 260 + Math.sin(a) * 181, 4, id);
+      }
+      // scrolls on four sides
+      var scroll = function (x, y, rot, sc) {
+        return '<g transform="translate(' + x + ' ' + y + ') rotate(' + rot + ') scale(' + sc + ')" fill="none" stroke="' + g +
+          '" stroke-width="7" stroke-linecap="round"><path d="M0 0c-30-6-48 16-36 34c10 14 30 6 26-8"/>' +
+          '<path d="M0 0c30-6 48 16 36 34c-10 14-30 6-26-8"/></g>';
+      };
+      body += scroll(200, 70, 180, 1.2) + scroll(200, 452, 0, 1.2) + scroll(52, 260, 90, 1) + scroll(348, 260, -90, 1);
+      // crest and drop
+      body += '<path d="M200 6c-14 18-14 34 0 46c14-12 14-28 0-46z" fill="' + g + '"/>' +
+        '<path d="M200 470c-12 14-12 28 0 40c12-12 12-26 0-40z" fill="' + g + '"/>';
+      [[200, 82], [200, 440], [64, 260], [336, 260]].forEach(function (pt) {
+        body += rose(pt[0], pt[1], 17, 20, p, id, true) + pearl(pt[0] - 22, pt[1], 4, id) + pearl(pt[0] + 22, pt[1], 4, id);
+      });
+      return svg(400, 520, body);
+    });
+  }
+
+  // Ornate page border with notched corners (600 x 900, the page ratio).
+  function pageFrame(colors) {
+    return memo('pageFrame', colors, function (p) {
+      var id = 'pf';
+      var g = 'url(#' + id + 'gold)';
+      function notched(i, r) {
+        var x0 = i, y0 = i, x1 = 600 - i, y1 = 900 - i;
+        return 'M' + (x0 + r) + ' ' + y0 + 'H' + (x1 - r) + 'A' + r + ' ' + r + ' 0 0 0 ' + x1 + ' ' + (y0 + r) +
+          'V' + (y1 - r) + 'A' + r + ' ' + r + ' 0 0 0 ' + (x1 - r) + ' ' + y1 + 'H' + (x0 + r) +
+          'A' + r + ' ' + r + ' 0 0 0 ' + x0 + ' ' + (y1 - r) + 'V' + (y0 + r) + 'A' + r + ' ' + r + ' 0 0 0 ' + (x0 + r) + ' ' + y0 + 'Z';
+      }
+      var body = defs(p, id) +
+        '<path d="' + notched(30, 46) + '" fill="none" stroke="' + g + '" stroke-width="5"/>' +
+        '<path d="' + notched(42, 40) + '" fill="none" stroke="' + p.accent + '" stroke-width="1.5" opacity="0.8"/>';
+      function star(x, y, r) {
+        return '<path d="M' + x + ' ' + (y - r) + 'L' + (x + r * 0.28) + ' ' + (y - r * 0.28) + 'L' + (x + r) + ' ' + y + 'L' +
+          (x + r * 0.28) + ' ' + (y + r * 0.28) + 'L' + x + ' ' + (y + r) + 'L' + (x - r * 0.28) + ' ' + (y + r * 0.28) + 'L' +
+          (x - r) + ' ' + y + 'L' + (x - r * 0.28) + ' ' + (y - r * 0.28) + 'Z" fill="' + g + '"/>';
+      }
+      [[300, 30], [300, 870], [30, 450], [570, 450]].forEach(function (pt) {
+        body += star(pt[0], pt[1], 16) + pearl(pt[0], pt[1], 4.5, id);
+      });
+      [[30, 30], [570, 30], [30, 870], [570, 870]].forEach(function (pt) {
+        body += star(pt[0], pt[1], 11);
+      });
+      return svg(600, 900, body, ' preserveAspectRatio="none"');
+    });
+  }
+
+  // Satin ribbon bow with long tails.
+  function ribbon(colors) {
+    return memo('ribbon', colors, function (p) {
+      var c1 = mix(p.rose, '#ffffff', 0.25), c2 = mix(p.rose, p.primary, 0.4);
+      var body = '<defs><linearGradient id="rb" x1="0" y1="0" x2="1" y2="1">' +
+        '<stop offset="0" stop-color="' + c1 + '"/><stop offset="0.5" stop-color="' + p.rose + '"/>' +
+        '<stop offset="1" stop-color="' + c2 + '"/></linearGradient></defs>' +
+        '<g fill="url(#rb)" stroke="' + c2 + '" stroke-opacity="0.5" stroke-width="1.5">' +
+        '<path d="M100 90C60 40 10 40 12 80c2 40 50 40 88 12z"/>' +
+        '<path d="M100 90c40-50 92-50 90-10c-2 40-52 40-90 12z"/>' +
+        '<path d="M92 98c-30 60-40 140-20 210c10 40 0 80-20 110l22-4c24-40 30-80 20-120c-14-60-4-130 14-190z"/>' +
+        '<path d="M108 98c6 70 30 130 24 200c-4 40 10 70 24 96l-22 4c-14-30-24-60-20-100c6-70-14-130-20-196z"/>' +
+        '<ellipse cx="100" cy="92" rx="16" ry="14"/></g>';
+      return svg(200, 440, body);
+    });
+  }
+
+  // Faint watercolour florals for the page paper.
+  function paperFloral(colors) {
+    return memo('paperFloral', colors, function (p) {
+      var c = mix(p.rose, p.paper, 0.45);
+      var body = '<g fill="none" stroke="' + c + '" stroke-width="1.4" opacity="0.5">' +
+        '<path d="M40 180c20-40 20-80 60-120M60 140c-14-6-22-18-20-30M80 100c12-10 26-12 36-6"/>' +
+        '<path d="M150 60c10 30 30 50 40 90"/></g>' +
+        '<g fill="' + c + '" opacity="0.35"><circle cx="100" cy="60" r="6"/><circle cx="40" cy="110" r="4"/>' +
+        '<circle cx="118" cy="94" r="4"/><circle cx="190" cy="150" r="5"/></g>';
+      return svg(200, 200, body);
     });
   }
 
@@ -333,6 +500,11 @@
     damask: damask,
     thumbnail: thumbnail,
     favicon: favicon,
+    curtain: curtain,
+    ovalFrame: ovalFrame,
+    pageFrame: pageFrame,
+    ribbon: ribbon,
+    paperFloral: paperFloral,
     dataUri: dataUri
   };
 

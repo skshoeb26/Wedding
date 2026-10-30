@@ -107,7 +107,7 @@ test('only fonts used by the theme are bundled', () => {
 });
 
 test('each template bundles only its own runtime', () => {
-  for (const id of ['floral-book', 'garden-scroll']) {
+  for (const id of ['floral-book', 'garden-scroll', 'sealed-envelope']) {
     const config = normalizeConfig({ ...createDefaultConfig(), template: id });
     const { files } = buildSite({ config, sources, mode: 'zip', art: InviteArt });
     const js = files.find((f) => f.path === 'assets/js/app.js').data;
